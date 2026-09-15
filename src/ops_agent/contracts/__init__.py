@@ -34,7 +34,7 @@ from ops_agent.contracts.enums import (
 from ops_agent.contracts.errors import ErrorResponse
 from ops_agent.contracts.evidence import Evidence, EvidencePlan, EvidenceRequest
 from ops_agent.contracts.experiments import ExperimentPlan, ExperimentResult, ExperimentStep
-from ops_agent.contracts.health import ServiceStatus
+from ops_agent.contracts.health import ModuleHealth, ServiceStatus
 from ops_agent.contracts.hypotheses import Hypothesis, HypothesisSet
 from ops_agent.contracts.operations import (
     CleanupResult,
@@ -96,6 +96,7 @@ __all__ = [
     "KnowledgeContext",
     "KnowledgeLookupResult",
     "KnowledgeQuery",
+    "ModuleHealth",
     "NextAction",
     "ProblemContext",
     "PreparedEnvironment",

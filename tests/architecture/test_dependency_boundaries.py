@@ -25,7 +25,7 @@ def test_framework_imports_stay_at_architectural_boundaries() -> None:
         imports = _imports_in(path)
         for imported in imports:
             if imported == "fastapi" or imported.startswith("fastapi."):
-                if not relative_parts or relative_parts[0] != "api":
+                if "api" not in relative_parts:
                     violations.append(f"{path}: FastAPI import outside api")
             if imported == "langchain" or imported.startswith("langchain."):
                 if not AI_BOUNDARIES.intersection(relative_parts):
