@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1001",
+  "timestamp": "2026-09-15T06:00:00Z",
+  "source": "obsidian-adapter",
+  "metadata": {},
+  "query": "Expected checkout timeout behavior",
+  "facts": ["Version 2026.09.1 defaults to a pool limit of 10."],
+  "references": [{"uri": "obsidian://products/checkout/2026.09.1", "digest": null, "media_type": "text/markdown"}],
+  "skill_ids": ["troubleshooting.checkout-timeout.v1"],
+  "limitations": []
+}

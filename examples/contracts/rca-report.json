@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1007",
+  "timestamp": "2026-09-15T06:15:00Z",
+  "source": "core-runtime",
+  "metadata": {},
+  "report_id": "RCA-1001",
+  "title": "Checkout timeout RCA",
+  "executive_summary": "A low connection pool limit caused request timeouts.",
+  "confirmed_facts": [{"statement": "Pool waiters reached 42.", "evidence_ids": ["E-1001"]}],
+  "inferences": [{"statement": "The deployment introduced the limit.", "evidence_ids": ["E-1001"]}],
+  "root_causes": [{"description": "The pool limit is too low.", "confidence": 0.98, "hypothesis_ids": ["H-1001"], "evidence_ids": ["E-1001"]}],
+  "remediation_recommendations": [{"action": "Restore the reviewed pool limit.", "rationale": "Removes the reproduced bottleneck.", "priority": 1}],
+  "unverified_items": ["Peak seasonal load remains unverified."],
+  "evidence_chain": [{"evidence_id": "E-1001", "relationship": "supports", "target_id": "H-1001"}]
+}

@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1001",
+  "timestamp": "2026-09-15T06:00:00Z",
+  "source": "core-runtime",
+  "metadata": {},
+  "status": "received",
+  "revision": 0,
+  "problem": {
+    "schema_version": "1.0", "incident_id": "INC-1001", "request_id": "REQ-1001",
+    "timestamp": "2026-09-15T06:00:00Z", "source": "incident-api", "metadata": {},
+    "title": "Checkout requests time out", "description": "Requests exceed the latency budget.",
+    "symptoms": ["HTTP 504"], "severity": "high", "observed_at": "2026-09-15T05:55:00Z",
+    "affected_services": ["checkout-api"], "environment": {"cluster": "prod-a"}
+  },
+  "product": null,
+  "knowledge": null,
+  "troubleshooting": null,
+  "hypotheses": null,
+  "evidence": [],
+  "experiment_plans": [],
+  "experiment_results": [],
+  "verification_results": [],
+  "root_cause_assessment": null
+}

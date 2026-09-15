@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1002",
+  "timestamp": "2026-09-15T06:02:00Z",
+  "source": "logs-adapter",
+  "metadata": {},
+  "code": "UPSTREAM_TIMEOUT",
+  "message": "The log backend timed out.",
+  "category": "timeout",
+  "retryable": true,
+  "details": {"backend": "logs"}
+}

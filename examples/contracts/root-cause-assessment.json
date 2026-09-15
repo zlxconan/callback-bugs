@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1006",
+  "timestamp": "2026-09-15T06:13:00Z",
+  "source": "reasoning-engine",
+  "metadata": {},
+  "status": "confirmed",
+  "confirmed_facts": [{"statement": "Pool waiters reached 42.", "evidence_ids": ["E-1001"]}],
+  "inferences": [{"statement": "The deployment introduced the limit.", "evidence_ids": ["E-1001"]}],
+  "root_causes": [{"description": "The pool limit is too low.", "confidence": 0.98, "hypothesis_ids": ["H-1001"], "evidence_ids": ["E-1001"]}],
+  "unverified_items": [],
+  "overall_confidence": 0.98
+}

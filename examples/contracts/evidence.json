@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1002",
+  "timestamp": "2026-09-15T06:01:00Z",
+  "source": "metrics-adapter",
+  "metadata": {},
+  "evidence_id": "E-1001",
+  "evidence_type": "metric",
+  "raw_reference": {"uri": "metrics://prod-a/checkout/pool_waiters", "digest": "sha256:abc123", "media_type": "application/json"},
+  "structured_value": {"pool_waiters": 42},
+  "observed_at": "2026-09-15T05:59:00Z",
+  "supports_hypotheses": ["H-1001"],
+  "contradicts_hypotheses": [],
+  "confidence": 0.95,
+  "acquisition_status": "acquired"
+}

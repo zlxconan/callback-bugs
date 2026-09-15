@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1001",
+  "timestamp": "2026-09-15T06:00:00Z",
+  "source": "reasoning-engine",
+  "metadata": {},
+  "objective": "Confirm or falsify pool exhaustion.",
+  "requests": [{
+    "schema_version": "1.0", "incident_id": "INC-1001", "request_id": "REQ-1002",
+    "timestamp": "2026-09-15T06:00:00Z", "source": "reasoning-engine", "metadata": {},
+    "hypothesis_ids": ["H-1001"], "evidence_type": "metric",
+    "description": "Collect pool waiter count.", "query": "pool_waiters",
+    "acquisition_method": "metrics.query", "priority": 1, "required": true, "time_range": null
+  }],
+  "completion_criteria": ["Required evidence request has a terminal status."]
+}

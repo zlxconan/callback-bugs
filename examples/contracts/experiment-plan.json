@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1003",
+  "timestamp": "2026-09-15T06:05:00Z",
+  "source": "reproduction-engine",
+  "metadata": {},
+  "experiment_id": "EXP-1001",
+  "title": "Reproduce connection pool exhaustion",
+  "objective": "Verify that the new pool limit produces the timeout pattern.",
+  "hypothesis_ids": ["H-1001"],
+  "environment": {"kind": "isolated", "version": "2026.09.1"},
+  "steps": [{"step_number": 1, "action": "Apply the candidate limit and replay load.", "expected_outcome": "Pool waiters rise before HTTP 504 responses."}],
+  "success_criteria": ["HTTP 504 and pool waiter signals correlate."],
+  "rollback_steps": ["Destroy the isolated environment."],
+  "risk_level": "low",
+  "requires_approval": false
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1003",
+  "timestamp": "2026-09-15T06:10:00Z",
+  "source": "reproduction-engine",
+  "metadata": {},
+  "experiment_id": "EXP-1001",
+  "status": "succeeded",
+  "started_at": "2026-09-15T06:06:00Z",
+  "completed_at": "2026-09-15T06:10:00Z",
+  "observations": ["Timeout pattern reproduced."],
+  "evidence_ids": ["E-1001"],
+  "outputs": {"timeout_rate": 0.12}
+}

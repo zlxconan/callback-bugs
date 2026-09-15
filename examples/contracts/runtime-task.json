@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1002",
+  "timestamp": "2026-09-15T06:00:00Z",
+  "source": "core-runtime",
+  "metadata": {},
+  "task_id": "TASK-1001",
+  "kind": "investigation",
+  "status": "queued",
+  "payload": {"evidence_request_id": "REQ-1002"},
+  "depends_on": [],
+  "attempt": 0,
+  "max_attempts": 3,
+  "deadline": "2026-09-15T06:05:00Z"
+}

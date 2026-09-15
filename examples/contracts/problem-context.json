@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1001",
+  "timestamp": "2026-09-15T06:00:00Z",
+  "source": "incident-api",
+  "metadata": {"tenant": "demo"},
+  "title": "Checkout requests time out",
+  "description": "Requests exceed the expected latency budget.",
+  "symptoms": ["HTTP 504"],
+  "severity": "high",
+  "observed_at": "2026-09-15T05:55:00Z",
+  "affected_services": ["checkout-api"],
+  "environment": {"cluster": "prod-a"}
+}

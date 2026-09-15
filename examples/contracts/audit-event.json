@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1002",
+  "timestamp": "2026-09-15T06:02:00Z",
+  "source": "core-runtime",
+  "metadata": {},
+  "audit_event_id": "AUD-1001",
+  "event_type": "task.completed",
+  "actor": "runtime",
+  "action": "complete_task",
+  "outcome": "succeeded",
+  "target_ref": "TASK-1001",
+  "details": {"evidence_ids": ["E-1001"]},
+  "previous_event_id": null
+}

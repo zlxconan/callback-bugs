@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1002",
+  "timestamp": "2026-09-15T06:00:00Z",
+  "source": "reasoning-engine",
+  "metadata": {},
+  "hypothesis_ids": ["H-1001"],
+  "evidence_type": "log",
+  "description": "Collect connection pool timeout logs.",
+  "query": "service=checkout-api level=error",
+  "acquisition_method": "logs.search",
+  "priority": 1,
+  "required": true,
+  "time_range": {"start": "2026-09-15T05:00:00Z", "end": "2026-09-15T06:00:00Z"}
+}

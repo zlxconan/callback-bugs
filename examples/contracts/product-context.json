@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1001",
+  "timestamp": "2026-09-15T06:00:00Z",
+  "source": "product-catalog",
+  "metadata": {},
+  "product_name": "Commerce Platform",
+  "product_version": "2026.09.1",
+  "component": "checkout-api",
+  "deployment_environment": "production",
+  "expected_behavior": "Requests complete within 500 ms.",
+  "configuration": {"timeout_ms": 500}
+}

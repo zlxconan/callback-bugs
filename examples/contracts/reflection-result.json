@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1005",
+  "timestamp": "2026-09-15T06:12:00Z",
+  "source": "reasoning-engine",
+  "metadata": {},
+  "summary": "Evidence is sufficient for an RCA.",
+  "retained_hypothesis_ids": ["H-1001"],
+  "rejected_hypothesis_ids": [],
+  "new_hypotheses": [],
+  "missing_evidence": [],
+  "next_action": "assess_root_cause",
+  "should_continue": true
+}

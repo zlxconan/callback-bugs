@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1004",
+  "timestamp": "2026-09-15T06:11:00Z",
+  "source": "verifier",
+  "metadata": {},
+  "status": "confirmed",
+  "hypothesis_ids": ["H-1001"],
+  "experiment_ids": ["EXP-1001"],
+  "evidence_ids": ["E-1001"],
+  "confirmed_claims": ["Pool limit causes the observed timeout pattern."],
+  "rejected_claims": [],
+  "unverified_claims": [],
+  "rationale": "The isolated experiment reproduced both signals.",
+  "confidence": 0.98
+}

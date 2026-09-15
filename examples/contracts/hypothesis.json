@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1001",
+  "timestamp": "2026-09-15T06:00:00Z",
+  "source": "reasoning-engine",
+  "metadata": {},
+  "hypothesis_id": "H-1001",
+  "fact": ["Timeouts started after a deployment."],
+  "inference": "The new connection pool configuration may be exhausted.",
+  "assumption": ["Traffic shape did not materially change."],
+  "confidence": 0.7,
+  "supporting_evidence": ["E-1001"],
+  "contradicting_evidence": [],
+  "missing_evidence": ["REQ-1002"],
+  "status": "testing"
+}

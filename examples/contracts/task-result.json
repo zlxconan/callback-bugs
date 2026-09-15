@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1002",
+  "timestamp": "2026-09-15T06:02:00Z",
+  "source": "investigation-adapter",
+  "metadata": {},
+  "task_id": "TASK-1001",
+  "status": "succeeded",
+  "output": {"collected": true},
+  "evidence_ids": ["E-1001"],
+  "error": null,
+  "started_at": "2026-09-15T06:01:00Z",
+  "completed_at": "2026-09-15T06:02:00Z"
+}

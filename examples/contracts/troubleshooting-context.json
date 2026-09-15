@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "INC-1001",
+  "request_id": "REQ-1001",
+  "timestamp": "2026-09-15T06:00:00Z",
+  "source": "operator",
+  "metadata": {},
+  "actions_taken": ["Restarted one canary pod."],
+  "observed_results": ["Timeout rate was unchanged."],
+  "known_workarounds": ["Restore the prior pool limit."],
+  "constraints": ["Do not inject faults into production."]
+}
