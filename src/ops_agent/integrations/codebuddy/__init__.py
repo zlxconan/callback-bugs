@@ -1,0 +1,1 @@
+"""CodeBuddy integration package placeholder."""

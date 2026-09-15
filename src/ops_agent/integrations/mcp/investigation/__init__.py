@@ -1,0 +1,1 @@
+"""Investigation MCP package placeholder."""

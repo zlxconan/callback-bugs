@@ -1,0 +1,1 @@
+"""Investigation domain package placeholder."""

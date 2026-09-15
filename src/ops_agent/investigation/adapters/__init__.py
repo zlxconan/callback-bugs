@@ -1,0 +1,1 @@
+"""Investigation adapters package placeholder."""
