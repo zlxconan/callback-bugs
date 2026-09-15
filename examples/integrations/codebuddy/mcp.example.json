@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "ops-agent-runtime": {
+      "transport": "stdio",
+      "command": "<runtime-mcp-server-command>",
+      "args": []
+    },
+    "ops-agent-tools": {
+      "transport": "stdio",
+      "command": "<tool-mcp-server-command>",
+      "args": []
+    }
+  }
+}

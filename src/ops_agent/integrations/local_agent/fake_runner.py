@@ -67,72 +67,29 @@ class FakeIncidentOutcome(BaseModel):
         return self.final_state.rca_report
 
 
-class FakeIncidentRunner:
-    """Execute RuntimeTasks through Engine ports without touching external systems."""
+class FakeTaskReasoner:
+    """Complete one RuntimeTask through Engine ports without access to Runtime state APIs."""
 
     def __init__(
         self,
         *,
-        runtime: RuntimePort,
         knowledge: KnowledgePort,
         reasoning: ReasoningPort,
         investigation: InvestigationPort,
         reproduction: ReproductionPort,
     ) -> None:
-        self._runtime = runtime
         self._knowledge = knowledge
         self._reasoning = reasoning
         self._investigation = investigation
         self._reproduction = reproduction
 
-    async def run(
-        self,
-        command: StartIncidentRequest,
-        *,
-        max_tasks: int = 50,
-    ) -> FakeIncidentOutcome:
-        state = await self._runtime.start_incident(command)
-        incident_query = IncidentQuery(
-            schema_version=command.schema_version,
-            incident_id=command.incident_id,
-            request_id=command.request_id,
-            timestamp=command.timestamp,
-            source="fake-runner",
-            metadata={"fake": True},
-        )
-        history: list[RuntimeStage] = []
-        self._record_stage(history, state)
-
-        for _ in range(max_tasks):
-            task = await self._runtime.get_next_task(incident_query)
-            state = await self._runtime.get_state(incident_query)
-            self._record_stage(history, state)
-
-            if state.runtime_stage in {RuntimeStage.COMPLETED, RuntimeStage.FAILED}:
-                return FakeIncidentOutcome(
-                    query=incident_query,
-                    stage_history=history,
-                    final_state=state,
-                )
-            if state.runtime_stage is RuntimeStage.WAITING_HUMAN:
-                return FakeIncidentOutcome(
-                    query=incident_query,
-                    stage_history=history,
-                    final_state=state,
-                )
-            if task is None:
-                continue
-
-            try:
-                output = await self._dispatch(task, state)
-                result = self._successful_result(task, output)
-            except RuntimeError as error:
-                result = self._failed_result(task, str(error))
-
-            state = await self._runtime.submit_task_result(result)
-            self._record_stage(history, state)
-
-        raise RuntimeError(f"Fake incident exceeded task limit: {max_tasks}")
+    async def reason(self, task: RuntimeTask, state: IncidentState) -> TaskResult:
+        """Complete exactly one RuntimeTask without submitting or changing state."""
+        try:
+            output = await self._dispatch(task, state)
+            return self._successful_result(task, output)
+        except RuntimeError as error:
+            return self._failed_result(task, str(error))
 
     async def _dispatch(self, task: RuntimeTask, state: IncidentState) -> TaskOutput:
         stage = task.stage
@@ -272,7 +229,7 @@ class FakeIncidentRunner:
             for evidence_id in cause.evidence_ids
         ]
         return RCAReport(
-            **FakeIncidentRunner._base(task),
+            **FakeTaskReasoner._base(task),
             report_id="RCA-DUPLICATE-ORDER-001",
             title="首次响应超时与客户端重试导致重复订单",
             executive_summary="首次创建已成功，但响应延迟触发客户端重试；创建接口缺少幂等保护，重试再次创建订单。",
@@ -304,7 +261,7 @@ class FakeIncidentRunner:
     @staticmethod
     def _successful_result(task: RuntimeTask, output: TaskOutput) -> TaskResult:
         return TaskResult(
-            **FakeIncidentRunner._base(task),
+            **FakeTaskReasoner._base(task),
             task_id=task.task_id,
             status=TaskStatus.SUCCEEDED,
             output={},
@@ -318,7 +275,7 @@ class FakeIncidentRunner:
     @staticmethod
     def _failed_result(task: RuntimeTask, message: str) -> TaskResult:
         error = ErrorResponse(
-            **FakeIncidentRunner._base(task),
+            **FakeTaskReasoner._base(task),
             code="FAKE_ENGINE_FAILURE",
             message=message,
             category=ErrorCategory.TRANSIENT,
@@ -326,7 +283,7 @@ class FakeIncidentRunner:
             details={"fake": True},
         )
         return TaskResult(
-            **FakeIncidentRunner._base(task),
+            **FakeTaskReasoner._base(task),
             task_id=task.task_id,
             status=TaskStatus.FAILED,
             output={},
@@ -354,3 +311,69 @@ class FakeIncidentRunner:
             not history or history[-1] is not state.runtime_stage
         ):
             history.append(state.runtime_stage)
+
+
+class FakeIncidentRunner:
+    """Legacy Fake E2E loop composed from RuntimePort and a stateless task reasoner."""
+
+    def __init__(
+        self,
+        *,
+        runtime: RuntimePort,
+        knowledge: KnowledgePort,
+        reasoning: ReasoningPort,
+        investigation: InvestigationPort,
+        reproduction: ReproductionPort,
+    ) -> None:
+        self._runtime = runtime
+        self._reasoner = FakeTaskReasoner(
+            knowledge=knowledge,
+            reasoning=reasoning,
+            investigation=investigation,
+            reproduction=reproduction,
+        )
+
+    async def reason(self, task: RuntimeTask, state: IncidentState) -> TaskResult:
+        return await self._reasoner.reason(task, state)
+
+    async def run(
+        self,
+        command: StartIncidentRequest,
+        *,
+        max_tasks: int = 50,
+    ) -> FakeIncidentOutcome:
+        state = await self._runtime.start_incident(command)
+        incident_query = IncidentQuery(
+            schema_version=command.schema_version,
+            incident_id=command.incident_id,
+            request_id=command.request_id,
+            timestamp=command.timestamp,
+            source="fake-runner",
+            metadata={"fake": True},
+        )
+        history: list[RuntimeStage] = []
+        FakeTaskReasoner._record_stage(history, state)
+
+        for _ in range(max_tasks):
+            task = await self._runtime.get_next_task(incident_query)
+            state = await self._runtime.get_state(incident_query)
+            FakeTaskReasoner._record_stage(history, state)
+
+            if state.runtime_stage in {
+                RuntimeStage.COMPLETED,
+                RuntimeStage.FAILED,
+                RuntimeStage.WAITING_HUMAN,
+            }:
+                return FakeIncidentOutcome(
+                    query=incident_query,
+                    stage_history=history,
+                    final_state=state,
+                )
+            if task is None:
+                continue
+
+            result = await self.reason(task, state)
+            state = await self._runtime.submit_task_result(result)
+            FakeTaskReasoner._record_stage(history, state)
+
+        raise RuntimeError(f"Fake incident exceeded task limit: {max_tasks}")
