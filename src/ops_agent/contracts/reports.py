@@ -45,6 +45,7 @@ class RCAReport(ContractBase):
     confirmed_facts: list[EvidenceBackedClaim] = Field(min_length=1)
     inferences: list[EvidenceBackedClaim] = Field(default_factory=list)
     root_causes: list[RootCause] = Field(min_length=1)
+    minimal_reproduction_conditions: list[NonEmptyString] = Field(default_factory=list)
     remediation_recommendations: list[RemediationRecommendation] = Field(default_factory=list)
     unverified_items: list[NonEmptyString] = Field(default_factory=list)
     evidence_chain: list[EvidenceChainLink] = Field(min_length=1)

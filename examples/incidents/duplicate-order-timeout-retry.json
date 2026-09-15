@@ -1,0 +1,727 @@
+{
+  "query": {
+    "schema_version": "1.0",
+    "incident_id": "INC-DUPLICATE-ORDER-001",
+    "request_id": "REQ-DUPLICATE-ORDER-001",
+    "timestamp": "2026-09-15T06:00:00Z",
+    "source": "fake-runner",
+    "metadata": {
+      "fake": true
+    }
+  },
+  "stage_history": [
+    "created",
+    "normalize",
+    "knowledge_lookup",
+    "hypothesis",
+    "evidence_plan",
+    "investigate",
+    "root_cause_assessment",
+    "experiment_plan",
+    "reproduce",
+    "verify",
+    "rca",
+    "persist",
+    "completed"
+  ],
+  "final_state": {
+    "schema_version": "1.0",
+    "incident_id": "INC-DUPLICATE-ORDER-001",
+    "request_id": "REQ-DUPLICATE-ORDER-001",
+    "timestamp": "2026-09-15T06:00:00Z",
+    "source": "core-runtime",
+    "metadata": {},
+    "status": "resolved",
+    "revision": 22,
+    "problem": {
+      "schema_version": "1.0",
+      "incident_id": "INC-DUPLICATE-ORDER-001",
+      "request_id": "REQ-DUPLICATE-ORDER-001",
+      "timestamp": "2026-09-15T06:00:00Z",
+      "source": "fake-e2e",
+      "metadata": {
+        "case": "duplicate-order-after-timeout"
+      },
+      "title": "创建订单时首次响应超时，客户端重试后产生重复订单",
+      "description": "同一业务标识最终对应两个订单。",
+      "symptoms": [
+        "首次请求响应超时",
+        "客户端自动重试",
+        "最终产生重复订单"
+      ],
+      "severity": "high",
+      "observed_at": "2026-09-15T06:00:00Z",
+      "affected_services": [
+        "order-api"
+      ],
+      "environment": {
+        "name": "fake",
+        "external_systems": false
+      }
+    },
+    "product": {
+      "schema_version": "1.0",
+      "incident_id": "INC-DUPLICATE-ORDER-001",
+      "request_id": "REQ-DUPLICATE-ORDER-001",
+      "timestamp": "2026-09-15T06:00:00Z",
+      "source": "fake-knowledge",
+      "metadata": {
+        "fake": true
+      },
+      "product_name": "Order Service",
+      "product_version": "2026.09-retry-enabled",
+      "component": "order-api.create-order",
+      "deployment_environment": "fake",
+      "expected_behavior": "客户端可在超时后重试，服务端应通过幂等键避免重复创建。",
+      "configuration": {
+        "client_retry_enabled": true,
+        "idempotency_enforced": false
+      }
+    },
+    "knowledge": {
+      "schema_version": "1.0",
+      "incident_id": "INC-DUPLICATE-ORDER-001",
+      "request_id": "REQ-DUPLICATE-ORDER-001",
+      "timestamp": "2026-09-15T06:00:00Z",
+      "source": "fake-knowledge",
+      "metadata": {
+        "fake": true
+      },
+      "query": "订单创建接口的客户端重试与幂等行为",
+      "facts": [
+        "当前版本支持客户端重试。",
+        "创建接口非幂等，存在重复创建风险。"
+      ],
+      "references": [
+        {
+          "uri": "fake://knowledge/order-service/retry-and-idempotency",
+          "digest": "sha256:fake-order-knowledge-v1",
+          "media_type": "application/json"
+        }
+      ],
+      "skill_ids": [
+        "fake.order-duplicate-troubleshooting.v1"
+      ],
+      "limitations": [
+        "仅覆盖固定 MVP 场景，不代表真实产品行为。"
+      ]
+    },
+    "troubleshooting": {
+      "schema_version": "1.0",
+      "incident_id": "INC-DUPLICATE-ORDER-001",
+      "request_id": "REQ-DUPLICATE-ORDER-001",
+      "timestamp": "2026-09-15T06:00:00Z",
+      "source": "fake-knowledge",
+      "metadata": {
+        "fake": true
+      },
+      "actions_taken": [],
+      "observed_results": [],
+      "known_workarounds": [
+        "临时关闭客户端自动重试。"
+      ],
+      "constraints": [
+        "禁止连接真实订单系统。",
+        "仅允许 Fake 实验。"
+      ]
+    },
+    "hypotheses": {
+      "schema_version": "1.0",
+      "incident_id": "INC-DUPLICATE-ORDER-001",
+      "request_id": "REQ-DUPLICATE-ORDER-001",
+      "timestamp": "2026-09-15T06:00:00Z",
+      "source": "fake-reasoning",
+      "metadata": {
+        "fake": true
+      },
+      "hypotheses": [
+        {
+          "schema_version": "1.0",
+          "incident_id": "INC-DUPLICATE-ORDER-001",
+          "request_id": "REQ-DUPLICATE-ORDER-001",
+          "timestamp": "2026-09-15T06:00:00Z",
+          "source": "fake-reasoning",
+          "metadata": {
+            "fake": true
+          },
+          "hypothesis_id": "H-1",
+          "fact": [
+            "客户端在首次超时后执行了重试。"
+          ],
+          "inference": "首次请求已成功，但响应延迟触发重试并导致再次创建。",
+          "assumption": [
+            "两次请求使用同一业务标识。"
+          ],
+          "confidence": 0.7,
+          "supporting_evidence": [],
+          "contradicting_evidence": [],
+          "missing_evidence": [
+            "REQ-E1",
+            "REQ-E2",
+            "REQ-E3",
+            "REQ-E4"
+          ],
+          "status": "testing"
+        },
+        {
+          "schema_version": "1.0",
+          "incident_id": "INC-DUPLICATE-ORDER-001",
+          "request_id": "REQ-DUPLICATE-ORDER-001",
+          "timestamp": "2026-09-15T06:00:00Z",
+          "source": "fake-reasoning",
+          "metadata": {
+            "fake": true
+          },
+          "hypothesis_id": "H-2",
+          "fact": [
+            "最终存在两个订单。"
+          ],
+          "inference": "前端重复点击可能发起两次创建。",
+          "assumption": [
+            "用户在超时窗口内再次点击。"
+          ],
+          "confidence": 0.2,
+          "supporting_evidence": [],
+          "contradicting_evidence": [],
+          "missing_evidence": [
+            "REQ-E1"
+          ],
+          "status": "proposed"
+        },
+        {
+          "schema_version": "1.0",
+          "incident_id": "INC-DUPLICATE-ORDER-001",
+          "request_id": "REQ-DUPLICATE-ORDER-001",
+          "timestamp": "2026-09-15T06:00:00Z",
+          "source": "fake-reasoning",
+          "metadata": {
+            "fake": true
+          },
+          "hypothesis_id": "H-3",
+          "fact": [
+            "最终存在两个订单。"
+          ],
+          "inference": "消息队列重复消费可能创建两个订单。",
+          "assumption": [
+            "创建链路包含异步消费。"
+          ],
+          "confidence": 0.1,
+          "supporting_evidence": [],
+          "contradicting_evidence": [],
+          "missing_evidence": [
+            "REQ-E2",
+            "REQ-E4"
+          ],
+          "status": "proposed"
+        }
+      ],
+      "prioritized_hypothesis_ids": [
+        "H-1",
+        "H-2",
+        "H-3"
+      ],
+      "selection_rationale": "超时重试与非幂等风险最符合问题描述。"
+    },
+    "evidence": [
+      {
+        "schema_version": "1.0",
+        "incident_id": "INC-DUPLICATE-ORDER-001",
+        "request_id": "REQ-E1",
+        "timestamp": "2026-09-15T06:00:00Z",
+        "source": "fake-investigation",
+        "metadata": {
+          "fake": true
+        },
+        "evidence_id": "E-1",
+        "evidence_type": "trace",
+        "raw_reference": {
+          "uri": "fake://trace/business/BIZ-001/requests",
+          "digest": "sha256:fake-e-1",
+          "media_type": "application/json"
+        },
+        "structured_value": {
+          "business_id": "BIZ-001",
+          "request_count": 2
+        },
+        "observed_at": "2026-09-15T06:00:00Z",
+        "supports_hypotheses": [
+          "H-1"
+        ],
+        "contradicts_hypotheses": [],
+        "confidence": 1.0,
+        "acquisition_status": "acquired"
+      },
+      {
+        "schema_version": "1.0",
+        "incident_id": "INC-DUPLICATE-ORDER-001",
+        "request_id": "REQ-E2",
+        "timestamp": "2026-09-15T06:00:00Z",
+        "source": "fake-investigation",
+        "metadata": {
+          "fake": true
+        },
+        "evidence_id": "E-2",
+        "evidence_type": "log",
+        "raw_reference": {
+          "uri": "fake://logs/request/first",
+          "digest": "sha256:fake-e-2",
+          "media_type": "application/json"
+        },
+        "structured_value": {
+          "request": 1,
+          "backend_result": "created",
+          "order_id": "ORDER-1"
+        },
+        "observed_at": "2026-09-15T06:00:00Z",
+        "supports_hypotheses": [
+          "H-1"
+        ],
+        "contradicts_hypotheses": [
+          "H-3"
+        ],
+        "confidence": 1.0,
+        "acquisition_status": "acquired"
+      },
+      {
+        "schema_version": "1.0",
+        "incident_id": "INC-DUPLICATE-ORDER-001",
+        "request_id": "REQ-E3",
+        "timestamp": "2026-09-15T06:00:00Z",
+        "source": "fake-investigation",
+        "metadata": {
+          "fake": true
+        },
+        "evidence_id": "E-3",
+        "evidence_type": "trace",
+        "raw_reference": {
+          "uri": "fake://trace/request/first/response",
+          "digest": "sha256:fake-e-3",
+          "media_type": "application/json"
+        },
+        "structured_value": {
+          "response_delay_ms": 3000,
+          "client_timeout_ms": 1000
+        },
+        "observed_at": "2026-09-15T06:00:00Z",
+        "supports_hypotheses": [
+          "H-1"
+        ],
+        "contradicts_hypotheses": [
+          "H-2"
+        ],
+        "confidence": 1.0,
+        "acquisition_status": "acquired"
+      },
+      {
+        "schema_version": "1.0",
+        "incident_id": "INC-DUPLICATE-ORDER-001",
+        "request_id": "REQ-E4",
+        "timestamp": "2026-09-15T06:00:00Z",
+        "source": "fake-investigation",
+        "metadata": {
+          "fake": true
+        },
+        "evidence_id": "E-4",
+        "evidence_type": "event",
+        "raw_reference": {
+          "uri": "fake://events/request/second",
+          "digest": "sha256:fake-e-4",
+          "media_type": "application/json"
+        },
+        "structured_value": {
+          "request": 2,
+          "backend_result": "created",
+          "order_id": "ORDER-2"
+        },
+        "observed_at": "2026-09-15T06:00:00Z",
+        "supports_hypotheses": [
+          "H-1"
+        ],
+        "contradicts_hypotheses": [
+          "H-3"
+        ],
+        "confidence": 1.0,
+        "acquisition_status": "acquired"
+      }
+    ],
+    "latest_evidence_plan": {
+      "schema_version": "1.0",
+      "incident_id": "INC-DUPLICATE-ORDER-001",
+      "request_id": "REQ-DUPLICATE-ORDER-001",
+      "timestamp": "2026-09-15T06:00:00Z",
+      "source": "fake-reasoning",
+      "metadata": {
+        "fake": true
+      },
+      "objective": "验证首次成功、响应延迟、客户端重试和二次创建之间的因果链。",
+      "requests": [
+        {
+          "schema_version": "1.0",
+          "incident_id": "INC-DUPLICATE-ORDER-001",
+          "request_id": "REQ-E1",
+          "timestamp": "2026-09-15T06:00:00Z",
+          "source": "fake-reasoning",
+          "metadata": {
+            "fake": true
+          },
+          "hypothesis_ids": [
+            "H-1"
+          ],
+          "evidence_type": "trace",
+          "description": "确认同一业务标识是否存在两次请求。",
+          "query": "request-count",
+          "acquisition_method": "fake-investigation.collect",
+          "priority": 1,
+          "required": true,
+          "time_range": null
+        },
+        {
+          "schema_version": "1.0",
+          "incident_id": "INC-DUPLICATE-ORDER-001",
+          "request_id": "REQ-E2",
+          "timestamp": "2026-09-15T06:00:00Z",
+          "source": "fake-reasoning",
+          "metadata": {
+            "fake": true
+          },
+          "hypothesis_ids": [
+            "H-1"
+          ],
+          "evidence_type": "log",
+          "description": "确认第一次请求后端是否实际成功。",
+          "query": "first-result",
+          "acquisition_method": "fake-investigation.collect",
+          "priority": 2,
+          "required": true,
+          "time_range": null
+        },
+        {
+          "schema_version": "1.0",
+          "incident_id": "INC-DUPLICATE-ORDER-001",
+          "request_id": "REQ-E3",
+          "timestamp": "2026-09-15T06:00:00Z",
+          "source": "fake-reasoning",
+          "metadata": {
+            "fake": true
+          },
+          "hypothesis_ids": [
+            "H-1"
+          ],
+          "evidence_type": "trace",
+          "description": "确认首次响应是否超过客户端超时。",
+          "query": "response-delay",
+          "acquisition_method": "fake-investigation.collect",
+          "priority": 3,
+          "required": true,
+          "time_range": null
+        },
+        {
+          "schema_version": "1.0",
+          "incident_id": "INC-DUPLICATE-ORDER-001",
+          "request_id": "REQ-E4",
+          "timestamp": "2026-09-15T06:00:00Z",
+          "source": "fake-reasoning",
+          "metadata": {
+            "fake": true
+          },
+          "hypothesis_ids": [
+            "H-1"
+          ],
+          "evidence_type": "event",
+          "description": "确认第二次请求是否再次创建成功。",
+          "query": "second-result",
+          "acquisition_method": "fake-investigation.collect",
+          "priority": 4,
+          "required": true,
+          "time_range": null
+        }
+      ],
+      "completion_criteria": [
+        "四项固定证据均已获取。"
+      ]
+    },
+    "experiment_plans": [
+      {
+        "schema_version": "1.0",
+        "incident_id": "INC-DUPLICATE-ORDER-001",
+        "request_id": "REQ-DUPLICATE-ORDER-001",
+        "timestamp": "2026-09-15T06:00:00Z",
+        "source": "fake-reasoning",
+        "metadata": {
+          "fake": true
+        },
+        "experiment_id": "EXP-1",
+        "title": "模拟首次响应延迟触发客户端重试",
+        "objective": "验证非幂等创建接口在首次成功但响应超时时产生重复订单。",
+        "hypothesis_ids": [
+          "H-1"
+        ],
+        "environment": {
+          "kind": "fake",
+          "external_systems": false
+        },
+        "steps": [
+          {
+            "step_number": 1,
+            "action": "使用固定业务标识提交创建订单请求。",
+            "expected_outcome": "后端创建第一个订单。"
+          },
+          {
+            "step_number": 2,
+            "action": "将首次响应延迟到客户端超时之后。",
+            "expected_outcome": "客户端触发一次自动重试。"
+          },
+          {
+            "step_number": 3,
+            "action": "允许重试请求再次进入非幂等创建逻辑。",
+            "expected_outcome": "相同业务标识产生第二个订单。"
+          }
+        ],
+        "success_criteria": [
+          "相同业务标识最终对应两个订单。",
+          "H-1 的因果链被复现。"
+        ],
+        "rollback_steps": [
+          "清理 Fake 内存环境。"
+        ],
+        "risk_level": "none",
+        "requires_approval": false
+      }
+    ],
+    "experiment_results": [
+      {
+        "schema_version": "1.0",
+        "incident_id": "INC-DUPLICATE-ORDER-001",
+        "request_id": "REQ-DUPLICATE-ORDER-001",
+        "timestamp": "2026-09-15T06:00:00Z",
+        "source": "fake-reproduction",
+        "metadata": {
+          "fake": true
+        },
+        "experiment_id": "EXP-1",
+        "status": "succeeded",
+        "started_at": "2026-09-15T06:00:00Z",
+        "completed_at": "2026-09-15T06:00:00Z",
+        "observations": [
+          "首次请求创建 ORDER-1。",
+          "首次响应延迟超过客户端超时。",
+          "客户端以相同业务标识重试。",
+          "重试请求创建 ORDER-2。"
+        ],
+        "evidence_ids": [
+          "E-1",
+          "E-2",
+          "E-3",
+          "E-4"
+        ],
+        "outputs": {
+          "business_id": "BIZ-001",
+          "client_retries": 1,
+          "orders_created": 2,
+          "order_ids": [
+            "ORDER-1",
+            "ORDER-2"
+          ]
+        }
+      }
+    ],
+    "verification_results": [
+      {
+        "schema_version": "1.0",
+        "incident_id": "INC-DUPLICATE-ORDER-001",
+        "request_id": "REQ-DUPLICATE-ORDER-001",
+        "timestamp": "2026-09-15T06:00:00Z",
+        "source": "fake-reproduction",
+        "metadata": {
+          "fake": true
+        },
+        "status": "confirmed",
+        "hypothesis_ids": [
+          "H-1"
+        ],
+        "experiment_ids": [
+          "EXP-1"
+        ],
+        "evidence_ids": [
+          "E-1",
+          "E-2",
+          "E-3",
+          "E-4"
+        ],
+        "confirmed_claims": [
+          "同一业务标识出现两个订单。",
+          "H-1 被固定实验验证。"
+        ],
+        "rejected_claims": [],
+        "unverified_claims": [
+          "真实生产延迟来源未验证。"
+        ],
+        "rationale": "Fake 输出显示首次成功、响应超时、客户端重试和二次创建。",
+        "confidence": 1.0
+      }
+    ],
+    "latest_reflection": null,
+    "root_cause_assessment": {
+      "schema_version": "1.0",
+      "incident_id": "INC-DUPLICATE-ORDER-001",
+      "request_id": "REQ-DUPLICATE-ORDER-001",
+      "timestamp": "2026-09-15T06:00:00Z",
+      "source": "fake-reasoning",
+      "metadata": {
+        "fake": true
+      },
+      "status": "confirmed",
+      "confirmed_facts": [
+        {
+          "statement": "同一业务标识存在两次创建请求。",
+          "evidence_ids": [
+            "E-1"
+          ]
+        },
+        {
+          "statement": "第一次请求后端成功但响应延迟，第二次请求也创建成功。",
+          "evidence_ids": [
+            "E-2",
+            "E-3",
+            "E-4"
+          ]
+        }
+      ],
+      "inferences": [
+        {
+          "statement": "客户端重试与服务端缺少幂等保护共同导致重复订单。",
+          "evidence_ids": [
+            "E-1",
+            "E-2",
+            "E-3",
+            "E-4"
+          ]
+        }
+      ],
+      "root_causes": [
+        {
+          "description": "创建订单接口未实施幂等去重；首次成功响应延迟触发客户端重试，第二次请求再次创建订单。",
+          "confidence": 0.98,
+          "hypothesis_ids": [
+            "H-1"
+          ],
+          "evidence_ids": [
+            "E-1",
+            "E-2",
+            "E-3",
+            "E-4"
+          ]
+        }
+      ],
+      "unverified_items": [
+        "真实生产网络延迟来源尚未验证。",
+        "消息队列链路未接入真实数据验证。"
+      ],
+      "overall_confidence": 0.98
+    },
+    "rca_report": {
+      "schema_version": "1.0",
+      "incident_id": "INC-DUPLICATE-ORDER-001",
+      "request_id": "REQ-DUPLICATE-ORDER-001",
+      "timestamp": "2026-09-15T06:00:00Z",
+      "source": "fake-runner",
+      "metadata": {
+        "fake": true
+      },
+      "report_id": "RCA-DUPLICATE-ORDER-001",
+      "title": "首次响应超时与客户端重试导致重复订单",
+      "executive_summary": "首次创建已成功，但响应延迟触发客户端重试；创建接口缺少幂等保护，重试再次创建订单。",
+      "confirmed_facts": [
+        {
+          "statement": "同一业务标识存在两次创建请求。",
+          "evidence_ids": [
+            "E-1"
+          ]
+        },
+        {
+          "statement": "第一次请求后端成功但响应延迟，第二次请求也创建成功。",
+          "evidence_ids": [
+            "E-2",
+            "E-3",
+            "E-4"
+          ]
+        }
+      ],
+      "inferences": [
+        {
+          "statement": "客户端重试与服务端缺少幂等保护共同导致重复订单。",
+          "evidence_ids": [
+            "E-1",
+            "E-2",
+            "E-3",
+            "E-4"
+          ]
+        }
+      ],
+      "root_causes": [
+        {
+          "description": "创建订单接口未实施幂等去重；首次成功响应延迟触发客户端重试，第二次请求再次创建订单。",
+          "confidence": 0.98,
+          "hypothesis_ids": [
+            "H-1"
+          ],
+          "evidence_ids": [
+            "E-1",
+            "E-2",
+            "E-3",
+            "E-4"
+          ]
+        }
+      ],
+      "minimal_reproduction_conditions": [
+        "创建接口使用相同业务标识",
+        "首次请求后端成功但响应延迟超过客户端超时",
+        "客户端在超时后自动重试",
+        "服务端未实施幂等去重"
+      ],
+      "remediation_recommendations": [
+        {
+          "action": "以业务标识或 Idempotency-Key 实现原子幂等去重。",
+          "rationale": "保证超时重试只返回首次创建结果，不产生第二个订单。",
+          "priority": 1
+        },
+        {
+          "action": "记录并返回可查询的创建请求结果。",
+          "rationale": "客户端超时后可先查询结果，再决定是否重试。",
+          "priority": 2
+        }
+      ],
+      "unverified_items": [
+        "真实生产网络延迟来源尚未验证。",
+        "消息队列链路未接入真实数据验证。"
+      ],
+      "evidence_chain": [
+        {
+          "evidence_id": "E-1",
+          "relationship": "supports",
+          "target_id": "H-1"
+        },
+        {
+          "evidence_id": "E-2",
+          "relationship": "supports",
+          "target_id": "H-1"
+        },
+        {
+          "evidence_id": "E-3",
+          "relationship": "supports",
+          "target_id": "H-1"
+        },
+        {
+          "evidence_id": "E-4",
+          "relationship": "supports",
+          "target_id": "H-1"
+        }
+      ]
+    },
+    "runtime_stage": "completed",
+    "pending_task": null,
+    "resume_stage": null,
+    "reflection_count": 0,
+    "last_error": null
+  }
+}

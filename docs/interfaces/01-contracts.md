@@ -196,7 +196,7 @@
 ### 8.1 RCAReport
 
 - **用途**：对外提供最终根因分析报告，防止把推断包装成事实。
-- **字段**：`report_id` 为 `RCA-xxx`；`title`；`executive_summary`；`confirmed_facts` 是带 `E-xxx` 的事实；`inferences` 独立保存推断；`root_causes` 包含置信度及 `H-xxx/E-xxx`；`remediation_recommendations` 包含 action/rationale/priority；`unverified_items`；`evidence_chain` 用显式关系连接证据与目标。
+- **字段**：`report_id` 为 `RCA-xxx`；`title`；`executive_summary`；`confirmed_facts` 是带 `E-xxx` 的事实；`inferences` 独立保存推断；`root_causes` 包含置信度及 `H-xxx/E-xxx`；`minimal_reproduction_conditions` 保存最小复现条件；`remediation_recommendations` 包含 action/rationale/priority；`unverified_items`；`evidence_chain` 用显式关系连接证据与目标。
 - **产生者**：RCA renderer，经 Runtime 从已验证状态构建。
 - **消费者**：API、Agent Host、操作者、审计和知识沉淀流程。
 - **JSON 示例**：[rca-report.json](../../examples/contracts/rca-report.json)
@@ -255,4 +255,3 @@ RCAReport 的五类内容禁止合并或复用为同一自由文本字段：已�
 ```
 
 `tests/contracts/test_contract_examples.py` 会逐一读取 20 个 JSON 文件，以对应模型执行 `model_validate_json`，再通过 `model_dump(mode="json")` 和 `model_validate` 完成 round trip。
-

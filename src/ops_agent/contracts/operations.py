@@ -43,6 +43,7 @@ class FinishIncidentRequest(ContractBase):
     assessment: RootCauseAssessment
     report_title: NonEmptyString
     executive_summary: NonEmptyString
+    minimal_reproduction_conditions: list[NonEmptyString] = Field(default_factory=list)
     remediation_recommendations: list[RemediationRecommendation] = Field(default_factory=list)
 
 

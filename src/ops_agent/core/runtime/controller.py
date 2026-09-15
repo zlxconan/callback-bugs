@@ -320,6 +320,7 @@ class CoreRuntime:
             confirmed_facts=command.assessment.confirmed_facts,
             inferences=command.assessment.inferences,
             root_causes=command.assessment.root_causes,
+            minimal_reproduction_conditions=command.minimal_reproduction_conditions,
             remediation_recommendations=command.remediation_recommendations,
             unverified_items=command.assessment.unverified_items,
             evidence_chain=links,
