@@ -1,44 +1,23 @@
-"""Stateless External Agent loop for CodeBuddy-compatible Reasoning Owners."""
+"""Runtime next/reason/submit loop for a Local Small Model Agent."""
 
-from typing import Literal, Protocol
-
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from ops_agent.contracts import (
     IncidentQuery,
     IncidentState,
     RCAReport,
     RuntimeStage,
-    RuntimeTask,
     StartIncidentRequest,
-    TaskResult,
 )
 from ops_agent.ports import RuntimePort
-from ops_agent.skills import CanonicalSkill, RuntimeTaskSkillRouter
+from ops_agent.skills import RuntimeTaskSkillRouter, SkillCatalog
+
+from .agent import LocalSmallModelAgent
 
 
-class CodeBuddyAdapterConfig(BaseModel):
-    """Transport choice and bounded loop settings for the host adapter."""
+class LocalAgentOutcome(BaseModel):
+    """Serializable outcome without duplicating Runtime-owned state."""
 
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    runtime_transport: Literal["mcp", "api"] = "mcp"
-    skills_target: Literal["codebuddy"] = "codebuddy"
-    max_iterations: int = Field(default=50, ge=1, le=1000)
-
-
-class ReasoningOwner(Protocol):
-    """Agent-owned reasoning for one task; no Runtime mutation capability is provided."""
-
-    async def reason(
-        self,
-        task: RuntimeTask,
-        state: IncidentState,
-        skills: tuple[CanonicalSkill, ...],
-    ) -> TaskResult: ...
-
-
-class CodeBuddyRunOutcome(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     query: IncidentQuery
@@ -51,37 +30,39 @@ class CodeBuddyRunOutcome(BaseModel):
         return self.final_state.rca_report
 
 
-class CodeBuddyAdapter:
-    """Run next/reason/submit while Core Runtime remains the sole state owner."""
+class LocalAgentRunner:
+    """Drive Core Runtime while never writing IncidentState directly."""
 
     def __init__(
         self,
         *,
         runtime: RuntimePort,
-        skill_router: RuntimeTaskSkillRouter,
-        reasoning_owner: ReasoningOwner,
-        config: CodeBuddyAdapterConfig,
+        agent: LocalSmallModelAgent,
+        skill_catalog: SkillCatalog,
+        max_iterations: int = 50,
     ) -> None:
+        if max_iterations < 1:
+            raise ValueError("max_iterations must be positive")
         self._runtime = runtime
-        self._skill_router = skill_router
-        self._reasoning_owner = reasoning_owner
-        self._config = config
+        self._agent = agent
+        self._skill_router = RuntimeTaskSkillRouter(skill_catalog)
+        self._max_iterations = max_iterations
 
-    async def run(self, command: StartIncidentRequest) -> CodeBuddyRunOutcome:
+    async def run(self, command: StartIncidentRequest) -> LocalAgentOutcome:
         state = await self._runtime.start_incident(command)
         query = IncidentQuery(
             schema_version=command.schema_version,
             incident_id=command.incident_id,
             request_id=command.request_id,
             timestamp=command.timestamp,
-            source="codebuddy-adapter",
-            metadata={"runtime_transport": self._config.runtime_transport},
+            source="local-agent-runner",
+            metadata={"reasoning_owner": "local-small-model"},
         )
         history: list[RuntimeStage] = []
         loaded_skills: list[str] = []
         self._record_stage(history, state)
 
-        for _ in range(self._config.max_iterations):
+        for _ in range(self._max_iterations):
             task = await self._runtime.get_next_task(query)
             state = await self._runtime.get_state(query)
             self._record_stage(history, state)
@@ -90,7 +71,7 @@ class CodeBuddyAdapter:
                 RuntimeStage.FAILED,
                 RuntimeStage.WAITING_HUMAN,
             }:
-                return CodeBuddyRunOutcome(
+                return LocalAgentOutcome(
                     query=query,
                     stage_history=history,
                     loaded_skills=loaded_skills,
@@ -101,13 +82,11 @@ class CodeBuddyAdapter:
 
             skills = self._skill_router.resolve(task)
             loaded_skills.extend(skill.name for skill in skills)
-            result = await self._reasoning_owner.reason(task, state, skills)
+            result = await self._agent.reason(task, state, skills)
             state = await self._runtime.submit_task_result(result)
             self._record_stage(history, state)
 
-        raise RuntimeError(
-            f"CodeBuddy Adapter exceeded max iterations: {self._config.max_iterations}"
-        )
+        raise RuntimeError(f"Local Agent exceeded max iterations: {self._max_iterations}")
 
     @staticmethod
     def _record_stage(history: list[RuntimeStage], state: IncidentState) -> None:

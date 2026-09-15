@@ -6,6 +6,7 @@ from ops_agent.ports.engines import (
     ReasoningPort,
     ReproductionPort,
 )
+from ops_agent.ports.llm import LLMProviderPort
 from ops_agent.ports.repositories import StateRepositoryPort
 from ops_agent.ports.runtime import RuntimePort
 from ops_agent.ports.support import ClockPort
@@ -33,6 +34,7 @@ __all__ = [
     "InvestigationPort",
     "K8sToolPort",
     "KnowledgePort",
+    "LLMProviderPort",
     "LogToolPort",
     "MetricToolPort",
     "ReasoningPort",

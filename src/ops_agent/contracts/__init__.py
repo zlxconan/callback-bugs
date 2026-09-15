@@ -36,6 +36,7 @@ from ops_agent.contracts.evidence import Evidence, EvidencePlan, EvidenceRequest
 from ops_agent.contracts.experiments import ExperimentPlan, ExperimentResult, ExperimentStep
 from ops_agent.contracts.health import ModuleHealth, ServiceStatus
 from ops_agent.contracts.hypotheses import Hypothesis, HypothesisSet
+from ops_agent.contracts.llm import LLMRequest, LLMResponse
 from ops_agent.contracts.operations import (
     CleanupResult,
     EnvironmentCleanupRequest,
@@ -96,6 +97,8 @@ __all__ = [
     "KnowledgeContext",
     "KnowledgeLookupResult",
     "KnowledgeQuery",
+    "LLMRequest",
+    "LLMResponse",
     "ModuleHealth",
     "NextAction",
     "ProblemContext",
