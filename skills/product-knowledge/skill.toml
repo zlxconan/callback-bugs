@@ -1,0 +1,6 @@
+name = "product-knowledge"
+version = "1.0.0"
+description = "Resolve version-scoped product behavior through the canonical product hierarchy."
+input_contracts = ["ProblemContext", "KnowledgeQuery"]
+output_contracts = ["ProductContext", "KnowledgeContext"]
+mcp_tools = ["product_query", "version_query"]

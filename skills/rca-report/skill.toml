@@ -1,0 +1,6 @@
+name = "rca-report"
+version = "1.0.0"
+description = "Render an evidence-linked RCA report with facts, inference, cause, actions, and gaps separated."
+input_contracts = ["RootCauseAssessment", "VerificationResult", "IncidentState"]
+output_contracts = ["RCAReport", "TaskResult"]
+mcp_tools = ["incident_get_state", "incident_submit", "incident_finish"]

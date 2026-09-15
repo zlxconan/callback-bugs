@@ -1,0 +1,6 @@
+name = "incident-analysis"
+version = "1.0.0"
+description = "Drive one bounded incident-analysis session by completing RuntimeTasks without owning workflow state."
+input_contracts = ["StartIncidentRequest", "RuntimeTask"]
+output_contracts = ["TaskResult", "RCAReport"]
+mcp_tools = ["incident_start", "incident_next", "incident_submit", "incident_get_state", "incident_finish"]

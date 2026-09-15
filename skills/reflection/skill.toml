@@ -1,0 +1,6 @@
+name = "reflection"
+version = "1.0.0"
+description = "Reflect on evidence and experiment gaps within Runtime loop limits."
+input_contracts = ["ReflectionRequest"]
+output_contracts = ["ReflectionResult"]
+mcp_tools = ["incident_get_state"]

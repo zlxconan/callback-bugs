@@ -1,0 +1,6 @@
+name = "evidence-planning"
+version = "1.0.0"
+description = "Convert hypothesis evidence gaps into minimal typed EvidenceRequests."
+input_contracts = ["EvidencePlanningRequest", "Hypothesis"]
+output_contracts = ["EvidencePlan", "EvidenceRequest"]
+mcp_tools = ["incident_get_state"]

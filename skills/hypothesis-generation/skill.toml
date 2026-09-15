@@ -1,0 +1,6 @@
+name = "hypothesis-generation"
+version = "1.0.0"
+description = "Generate falsifiable, evidence-aware incident hypotheses from bounded context."
+input_contracts = ["HypothesisGenerationRequest"]
+output_contracts = ["HypothesisSet"]
+mcp_tools = ["incident_get_state", "code_search"]

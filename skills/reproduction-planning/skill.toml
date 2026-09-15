@@ -1,0 +1,6 @@
+name = "reproduction-planning"
+version = "1.0.0"
+description = "Convert a supported hypothesis into a safe and verifiable ExperimentPlan."
+input_contracts = ["ExperimentPlanningRequest", "Hypothesis"]
+output_contracts = ["ExperimentPlan"]
+mcp_tools = ["incident_get_state", "code_search", "call_graph"]
