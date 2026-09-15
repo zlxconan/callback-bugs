@@ -8,6 +8,7 @@ from ops_agent.ports.engines import (
 )
 from ops_agent.ports.repositories import StateRepositoryPort
 from ops_agent.ports.runtime import RuntimePort
+from ops_agent.ports.support import ClockPort
 from ops_agent.ports.tools import (
     ApiToolPort,
     BrowserToolPort,
@@ -26,6 +27,7 @@ __all__ = [
     "ApiToolPort",
     "BrowserToolPort",
     "ChangeToolPort",
+    "ClockPort",
     "CodeGraphToolPort",
     "FaultInjectionToolPort",
     "InvestigationPort",

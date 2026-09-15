@@ -88,13 +88,34 @@ class IncidentLifecycleStatus(StrEnum):
     CANCELLED = "cancelled"
 
 
+class RuntimeStage(StrEnum):
+    CREATED = "created"
+    NORMALIZE = "normalize"
+    KNOWLEDGE_LOOKUP = "knowledge_lookup"
+    HYPOTHESIS = "hypothesis"
+    EVIDENCE_PLAN = "evidence_plan"
+    INVESTIGATE = "investigate"
+    ROOT_CAUSE_ASSESSMENT = "root_cause_assessment"
+    EXPERIMENT_PLAN = "experiment_plan"
+    REPRODUCE = "reproduce"
+    VERIFY = "verify"
+    REFLECT = "reflect"
+    RCA = "rca"
+    PERSIST = "persist"
+    WAITING_HUMAN = "waiting_human"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 class TaskKind(StrEnum):
+    NORMALIZATION = "normalization"
     KNOWLEDGE = "knowledge"
     REASONING = "reasoning"
     INVESTIGATION = "investigation"
     REPRODUCTION = "reproduction"
     VERIFICATION = "verification"
     REFLECTION = "reflection"
+    HUMAN_APPROVAL = "human_approval"
 
 
 class TaskStatus(StrEnum):

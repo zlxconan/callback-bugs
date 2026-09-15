@@ -1,12 +1,17 @@
 """Strongly typed request and result contracts used by module ports."""
 
-from pydantic import AwareDatetime, Field
+from pydantic import AwareDatetime, Field, model_validator
 
-from ops_agent.contracts.analysis import RootCauseAssessment, VerificationResult
+from ops_agent.contracts.analysis import (
+    ReflectionResult,
+    RootCauseAssessment,
+    VerificationResult,
+)
 from ops_agent.contracts.base import (
     ContractBase,
     ExperimentId,
     NonEmptyString,
+    StrictModel,
 )
 from ops_agent.contracts.contexts import (
     KnowledgeContext,
@@ -14,10 +19,10 @@ from ops_agent.contracts.contexts import (
     ProductContext,
     TroubleshootingContext,
 )
-from ops_agent.contracts.evidence import Evidence
+from ops_agent.contracts.evidence import Evidence, EvidencePlan
 from ops_agent.contracts.experiments import ExperimentPlan, ExperimentResult
 from ops_agent.contracts.hypotheses import Hypothesis, HypothesisSet
-from ops_agent.contracts.reports import RemediationRecommendation
+from ops_agent.contracts.reports import RCAReport, RemediationRecommendation
 
 
 class IncidentQuery(ContractBase):
@@ -139,6 +144,46 @@ class CleanupResult(ContractBase):
     observations: list[NonEmptyString] = Field(default_factory=list)
 
 
+class KnowledgeLookupResult(StrictModel):
+    """Atomic knowledge-stage output consumed by the runtime."""
+
+    product: ProductContext
+    knowledge: KnowledgeContext
+    troubleshooting: TroubleshootingContext
+
+
+class HumanDecision(StrictModel):
+    """Explicit human approval or rejection of a pending action."""
+
+    approved: bool
+    decided_by: NonEmptyString
+    reason: NonEmptyString
+
+
+class TaskOutput(StrictModel):
+    """Typed union-like payload returned for one RuntimeTask."""
+
+    problem: ProblemContext | None = None
+    knowledge_lookup: KnowledgeLookupResult | None = None
+    hypotheses: HypothesisSet | None = None
+    evidence_plan: EvidencePlan | None = None
+    evidence_batch: EvidenceBatch | None = None
+    root_cause_assessment: RootCauseAssessment | None = None
+    experiment_plan: ExperimentPlan | None = None
+    experiment_result: ExperimentResult | None = None
+    verification_result: VerificationResult | None = None
+    reflection_result: ReflectionResult | None = None
+    rca_report: RCAReport | None = None
+    human_decision: HumanDecision | None = None
+
+    @model_validator(mode="after")
+    def exactly_one_result_must_be_set(self) -> "TaskOutput":
+        populated = sum(value is not None for value in self.__dict__.values())
+        if populated != 1:
+            raise ValueError("TaskOutput requires exactly one typed result")
+        return self
+
+
 __all__ = [
     "CleanupResult",
     "EnvironmentCleanupRequest",
@@ -148,11 +193,14 @@ __all__ = [
     "ExperimentPlanningRequest",
     "ExperimentVerificationRequest",
     "FinishIncidentRequest",
+    "HumanDecision",
     "HypothesisGenerationRequest",
     "IncidentQuery",
     "KnowledgeQuery",
+    "KnowledgeLookupResult",
     "PreparedEnvironment",
     "ReflectionRequest",
     "RootCauseVerificationRequest",
     "StartIncidentRequest",
+    "TaskOutput",
 ]

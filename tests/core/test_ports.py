@@ -43,6 +43,7 @@ from ops_agent.ports import (
     ApiToolPort,
     BrowserToolPort,
     ChangeToolPort,
+    ClockPort,
     CodeGraphToolPort,
     FaultInjectionToolPort,
     InvestigationPort,
@@ -88,7 +89,8 @@ PORT_METHODS: dict[type[Any], set[str]] = {
     },
     InvestigationPort: {"collect", "collect_batch"},
     ReproductionPort: {"prepare", "execute", "verify", "cleanup"},
-    StateRepositoryPort: {"create", "get", "save", "list_events"},
+    StateRepositoryPort: {"create", "get", "save", "list_events", "append_event"},
+    ClockPort: {"now"},
     TraceToolPort: {"collect"},
     LogToolPort: {"collect"},
     MetricToolPort: {"collect"},
@@ -271,6 +273,9 @@ class FakeStateRepository:
 
     async def list_events(self, query: IncidentQuery) -> tuple[AuditEvent, ...]:
         return ()
+
+    async def append_event(self, event: AuditEvent) -> AuditEvent:
+        return event
 
 
 class FakeEvidenceTool:

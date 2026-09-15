@@ -116,9 +116,22 @@ async def create(state: IncidentState) -> IncidentState
 async def get(query: IncidentQuery) -> IncidentState | None
 async def save(state: IncidentState) -> IncidentState
 async def list_events(query: IncidentQuery) -> tuple[AuditEvent, ...]
+async def append_event(event: AuditEvent) -> AuditEvent
 ```
 
 Repository 只保存/读取完整 Contract；不暴露 ORM、数据库 session、查询构造器或供应商对象。`revision` 的并发语义将在 Runtime/Repository 实现步骤定义。
+
+`append_event` 是 Step 4 为 Runtime 审计链增加的兼容接口扩展。Snapshot save 与 event append 的事务性由后续持久化 Adapter 定义。
+
+## 4.1 ClockPort
+
+实现者：生产时钟或确定性 Fake Clock。消费者：Runtime。
+
+```python
+async def now() -> datetime
+```
+
+ClockPort 隔离 wall clock，使 deadline、retry 和 AuditEvent 时间在测试中可完全确定。它返回标准库 timezone-aware datetime，不返回框架类型。
 
 ## 5. Investigation Tool Ports
 
