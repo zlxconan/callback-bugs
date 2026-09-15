@@ -1,0 +1,20 @@
+{
+  "product_name": "Order Service",
+  "product_version": "2026.09-retry-enabled",
+  "component": "order-api.create-order",
+  "expected_behavior": "客户端可在超时后重试，服务端必须使用幂等键避免重复创建。",
+  "configuration": {
+    "client_retry_enabled": true,
+    "client_timeout_ms": 20,
+    "first_response_delay_ms": 80,
+    "idempotency_enforced": false
+  },
+  "facts": [
+    "2026.09-retry-enabled 版本默认允许客户端在超时后自动重试一次。",
+    "当前测试创建接口没有执行幂等去重，相同业务标识可以创建多条订单。"
+  ],
+  "known_workarounds": [
+    "为创建请求增加 Idempotency-Key 并在服务端原子去重。",
+    "修复前可关闭创建操作的自动重试。"
+  ]
+}
