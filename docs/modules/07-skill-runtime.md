@@ -22,3 +22,15 @@ bootstrap/Knowledge Adapter -> SkillResolver -> Registry -> Loader/Validator
 ```
 
 Core Runtime 不直接调用 Generic Skill Runtime。Built-in Method Skill 的 Agent Host Packaging 仍由 `ops_agent.skills` 负责，但两者共享 `SkillType` 分类。
+
+## 安装配置与装配
+
+`SkillInstallationConfig` 集中读取三个现有部署值：
+
+- `OPS_AGENT_BUILTIN_SKILLS_PATH`：可选，默认 `skills/builtin`；
+- `OPS_AGENT_PRODUCT_SKILLS_PATH`：Real Knowledge 装配必填；
+- `OPS_AGENT_SKILL_CORE_API`：可选，默认 `1.0`。
+
+`ops_agent.bootstrap.skills.build_skill_installation()` 是组合根：启动时读取一个 Built-in 根目录和一个 Product Plugin 根目录，使用相同的 Core API Validator，调用一次 `SkillRegistry.refresh()`，再把 Resolver 注入 `RealKnowledgeEngine`。当前没有多根目录聚合、文件监视或运行中热加载。
+
+Loader 只读取文件；Registry 的 install/uninstall 只改变进程内索引，不写入或删除插件目录。部署时两个目录均应只读，其中 Product Plugin 根必须通过外部 volume 提供。预检查入口为 `scripts/verify_skill_installation.py`。

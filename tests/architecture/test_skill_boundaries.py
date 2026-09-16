@@ -1,6 +1,8 @@
 import ast
 from pathlib import Path
 
+from ops_agent.skill_runtime import SkillType
+
 PACKAGE_ROOT = Path(__file__).parents[2] / "src" / "ops_agent"
 
 
@@ -55,3 +57,11 @@ def test_runtime_and_reasoning_do_not_read_product_plugin_files() -> None:
             source = path.read_text(encoding="utf-8")
             assert "product-skills" not in source
             assert "SkillLoader(" not in source
+
+
+def test_tool_skills_are_not_incident_runtime_skill_types() -> None:
+    assert {item.value for item in SkillType} == {
+        "BUILTIN_METHOD",
+        "PRODUCT",
+        "TROUBLESHOOTING",
+    }

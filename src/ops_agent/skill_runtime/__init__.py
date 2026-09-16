@@ -1,7 +1,15 @@
 """Generic Skill discovery, validation, lifecycle, and resolution."""
 
+from ops_agent.skill_runtime.config import (
+    SkillConfigurationError,
+    SkillInstallationConfig,
+)
 from ops_agent.skill_runtime.loader import LoadedSkill, SkillLoader
 from ops_agent.skill_runtime.manifest import SkillManifest, SkillType
+from ops_agent.skill_runtime.preflight import (
+    SkillInstallationVerification,
+    verify_skill_installation,
+)
 from ops_agent.skill_runtime.registry import (
     SkillNotInstalledError,
     SkillProductNotInstalledError,
@@ -13,6 +21,9 @@ from ops_agent.skill_runtime.validator import SkillValidationError, SkillValidat
 
 __all__ = [
     "LoadedSkill",
+    "SkillConfigurationError",
+    "SkillInstallationConfig",
+    "SkillInstallationVerification",
     "SkillLoader",
     "SkillManifest",
     "SkillNotInstalledError",
@@ -23,4 +34,5 @@ __all__ = [
     "SkillValidationError",
     "SkillValidator",
     "SkillVersionNotInstalledError",
+    "verify_skill_installation",
 ]

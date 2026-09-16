@@ -58,4 +58,23 @@ pytest
 
 健康端点：`GET /health`、`GET /ready`。
 
+## Skill 部署前配置
+
+开发环境可复制 `.env.example`。Real Knowledge 装配要求设置
+`OPS_AGENT_PRODUCT_SKILLS_PATH`；Built-in 默认从仓库相对路径
+`skills/builtin` 读取，容器部署时应显式设为 `/opt/ops-agent/skills/builtin`。
+
+使用合成 TestProduct 做只读安装预检查：
+
+```bash
+set -a
+source .env.example
+set +a
+.venv/bin/python scripts/verify_skill_installation.py \
+  --product TestProduct --version 1.0 --comparison-version 2.0
+```
+
+真实 Product/Troubleshooting Skill 来自外部 Repository，不提交到本仓库。完整安装、升级、卸载和 volume mount 规则见
+[Skill Installation](docs/deployment/01-skill-installation.md)。
+
 架构基线见 [00-architecture-plan.md](docs/architecture/00-architecture-plan.md)。
