@@ -11,8 +11,9 @@ services:
       OPS_AGENT_BUILTIN_SKILLS_PATH: /opt/ops-agent/skills/builtin
       OPS_AGENT_PRODUCT_SKILLS_PATH: /opt/ops-agent/plugins/product-skills
       OPS_AGENT_SKILL_CORE_API: ${OPS_AGENT_SKILL_CORE_API:-1.0}
+      OPS_AGENT_MCP_ALLOWED_HOSTS: ${OPS_AGENT_MCP_ALLOWED_HOSTS:-127.0.0.1:8000,localhost:8000}
     ports:
-      - "8000:8000"
+      - "${OPS_AGENT_PORT:-8000}:8000"
     volumes:
       - ${OPS_AGENT_PRODUCT_SKILLS_HOST_PATH:-./runtime-data/product-skills}:/opt/ops-agent/plugins/product-skills:ro
     read_only: true

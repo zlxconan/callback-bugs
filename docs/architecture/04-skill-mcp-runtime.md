@@ -66,6 +66,9 @@ Website -> Tool Skill -> Playwright MCP -> Package Builder
 
 MCP 禁止实现 Planner、Hypothesis、Evidence Planning、Reflection、RCA 方法论或 Runtime 状态转换。
 
+Runtime MCP 当前由同一 FastAPI 进程以 Streamable HTTP 暴露在 `/mcp/runtime/`；transport 只把官方
+MCP 请求映射到既有 `McpToolRegistry`，不承担 Engine 调度或 Reasoning 职责。
+
 ## 6. Agent Host
 
 External/Local Agent 读取当前 RuntimeTask，加载对应 Built-in Method Skill，并通过 Runtime MCP 提交结构化结果。Knowledge Lookup 的产品插件解析属于 Knowledge Engine，不把插件原文件交给 Reasoning Owner。

@@ -19,9 +19,8 @@ FastAPI、Core Runtime、四个 Engine、Skill Runtime 和 Runtime MCP Adapter�
 因此除了 `GET /health` 和 `GET /ready`，容器还公开各 Engine 已有的调试 Router。后三个 Engine
 仍是 Fake，不应被描述为真实生产集成。
 
-Runtime MCP 当前实现为进程内、传输无关的 `McpToolRegistry`，由 Python Agent Adapter 调用；仓库尚无
-HTTP、SSE 或 stdio MCP Server。因此 Compose 不声明虚假的第二服务或 MCP 网络端口。需要远程 Agent
-连接时，必须先在后续步骤实现并验证真实 MCP transport。
+Runtime MCP 的权威实现仍是进程内 `McpToolRegistry`，同一 FastAPI 进程通过官方 MCP SDK 将它暴露为
+Streamable HTTP：`/mcp/runtime/`。Compose 不拆第二服务或第二端口。
 
 ## 2. 镜像结构
 
@@ -60,9 +59,11 @@ cp .env.example .env
 | 变量 | Compose 默认值 | 是否必须修改 | 作用 |
 |---|---|---:|---|
 | `OPS_AGENT_IMAGE` | `ops-agent-core:0.1.0` | 否 | 构建或加载的镜像 tag |
+| `OPS_AGENT_PORT` | `8000` | 端口冲突时是 | Host 暴露端口；容器内仍为 8000 |
 | `OPS_AGENT_PRODUCT_SKILLS_HOST_PATH` | `./runtime-data/product-skills` | 有真实插件时是 | Host Product Repository 根目录 |
 | `OPS_AGENT_LOG_LEVEL` | `INFO` | 否 | 应用日志级别预留配置 |
 | `OPS_AGENT_SKILL_CORE_API` | `1.0` | 仅兼容版本变化时 | Plugin Core API 校验版本 |
+| `OPS_AGENT_MCP_ALLOWED_HOSTS` | `127.0.0.1:8000,localhost:8000` | 远程访问时是 | Runtime MCP 接受的精确 Host header 列表 |
 
 Compose 固定向容器传入：
 
@@ -167,9 +168,9 @@ docker compose exec ops-agent \
 
 预期为 `False`；随后确认 Product 内容只会在 bind mount 目标下出现。
 
-Runtime MCP 没有网络 transport，不能用 `curl` 验证。其现有可访问性由 Python 集成测试
-`tests/integration/mcp/test_runtime_e2e.py` 验证；部署组合测试同时验证 Registry 已挂到
-`app.state.runtime_mcp`。
+Runtime MCP 是 Streamable HTTP 协议端点，不能用普通 GET 是否返回 200 来替代 MCP 握手验证。可用
+官方 MCP Client 或 CodeBuddy 连接 `http://127.0.0.1:8000/mcp/runtime/` 并确认五个 Runtime Tool。
+部署组合测试同时验证 Registry 与 MCP Server 已挂入应用。
 
 ## 10. 日志和生命周期
 
@@ -254,4 +255,4 @@ docker compose --env-file .env.release up -d --no-build
 | Plugin validation error | `skill.toml`、entrypoint、Core API | 按 Plugin Spec 修复制品 |
 | 替换插件后仍返回旧内容 | Registry 只在装配时 refresh | 重启应用后复验 |
 | `docker load` 后仍尝试构建 | Compose 含 build 定义 | 使用 `up -d --no-build` 并确认 `OPS_AGENT_IMAGE` |
-| Runtime MCP 无网络地址 | 当前没有 MCP transport | 使用现有进程内 Adapter；远程接入留待后续交付步骤 |
+| MCP 返回 `421` | endpoint Host 不在 allowlist | 将精确 `host:port` 加入 `OPS_AGENT_MCP_ALLOWED_HOSTS` 后重启 |

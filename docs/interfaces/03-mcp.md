@@ -14,6 +14,11 @@ MCP 是工具执行接口，不是业务方法论、Skill Registry 或工作流�
 
 Runtime MCP 只转发/校验，不决定下一 Stage。
 
+当前远程 transport 是 MCP Streamable HTTP，挂载于同一 FastAPI 服务的
+`/mcp/runtime/`，没有独立端口。服务使用官方 Python MCP SDK，将每个工具的 `request` 参数映射到上表
+已有 Pydantic Contract。当前没有认证；`OPS_AGENT_MCP_ALLOWED_HOSTS` 仅提供 DNS-rebinding Host
+校验，不能代替认证、TLS、网关授权或租户隔离。
+
 ## 2. Observability MCP（环境插件）
 
 `trace_query`、`log_query`、`metric_query`、`k8s_inspect`、`change_query`、`topology_query` 均接收 EvidenceRequest、返回 Evidence，并映射对应 Tool Port。Investigation Engine 负责调用和 Evidence 标准化；Reasoning 不直接调用这些工具。
@@ -47,4 +52,4 @@ Playwright、Toxiproxy、mitmproxy、k6、Chaos Mesh 是这些 Port/MCP 的具�
 
 ## 7. 错误与验证
 
-现有错误保持：`MCP_TOOL_NOT_FOUND`、`MCP_INPUT_VALIDATION_ERROR`、`MCP_TOOL_EXECUTION_ERROR`，均携带 ErrorResponse。Registry 继续负责输入/输出 Schema 验证，真实传输、认证、租户隔离和限流仍未实现。
+现有错误保持：`MCP_TOOL_NOT_FOUND`、`MCP_INPUT_VALIDATION_ERROR`、`MCP_TOOL_EXECUTION_ERROR`，均携带 ErrorResponse。Registry 继续负责输入/输出 Schema 验证；Streamable HTTP 已实现，认证、TLS、租户隔离和限流仍未实现。

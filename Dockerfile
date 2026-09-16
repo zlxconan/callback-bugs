@@ -19,7 +19,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     OPS_AGENT_LOG_LEVEL=INFO \
     OPS_AGENT_BUILTIN_SKILLS_PATH=/opt/ops-agent/skills/builtin \
     OPS_AGENT_PRODUCT_SKILLS_PATH=/opt/ops-agent/plugins/product-skills \
-    OPS_AGENT_SKILL_CORE_API=1.0
+    OPS_AGENT_SKILL_CORE_API=1.0 \
+    OPS_AGENT_MCP_ALLOWED_HOSTS=127.0.0.1:8000,localhost:8000
 
 RUN groupadd --system --gid 10001 ops-agent \
     && useradd --system --uid 10001 --gid ops-agent --home-dir /opt/ops-agent ops-agent \

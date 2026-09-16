@@ -73,8 +73,10 @@ curl --fail http://127.0.0.1:8000/ready
 
 完整构建、只读插件挂载、验证和离线交付流程见
 [Docker Deployment](docs/deployment/02-docker-deployment.md)。Runtime MCP 当前是同一 Python
-应用中的进程内、传输无关 Registry；本版本没有声明额外的 HTTP/SSE MCP 端口。部署组合使用
-RealKnowledgeEngine；Reasoning、Investigation、Reproduction 仍使用项目当前已有的 Fake Adapter。
+应用中的 Registry，并通过 `http://127.0.0.1:8000/mcp/runtime/` 提供 Streamable HTTP；不声明
+第二个服务或端口。部署组合使用 RealKnowledgeEngine；Reasoning、Investigation、Reproduction 仍使用
+项目当前已有的 Fake Adapter。CodeBuddy 集成见
+[CodeBuddy Integration](docs/integrations/codebuddy.md)。
 
 ## Skill 部署前配置
 

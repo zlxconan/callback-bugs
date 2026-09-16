@@ -1,150 +1,273 @@
-# CodeBuddy External Agent Adapter
+# CodeBuddy Integration & Verification
 
-> 状态：Mock verified / real CodeBuddy client pending  
-> 日期：2026-09-15  
-> 范围：Step 9，无状态 Reasoning Owner Adapter
+> Ops Agent `0.1.0` · CodeBuddy External Reasoning Owner · 2026-09-16
+> 状态：Plugin/Skill/Streamable HTTP MCP 协议验证完成；真实 CodeBuddy Host 待验证。
 
-## 1. 定位
+本文遵循 CodeBuddy 官方的 [Plugin Reference](https://www.codebuddy.ai/docs/cli/plugins-reference)、
+[CLI Reference](https://www.codebuddy.ai/docs/cli/cli-reference) 和
+[MCP configuration](https://www.codebuddy.ai/docs/cli/mcp)。
 
-CodeBuddy 只充当当前 RuntimeTask 的 Reasoning Owner。IncidentState、Stage、重试、超时、循环、审批和终止状态全部归 Core Runtime 所有。
+## 1. 集成边界
+
+CodeBuddy 只负责当前 `RuntimeTask` 的推理，加载 Built-in Method Skill，生成结构化 `TaskResult` 并
+调用 Runtime MCP。IncidentState、状态转换、重试、超时、循环、审批和终态全部由 Core Runtime 管理。
+
+CodeBuddy 不安装或读取 Product/Troubleshooting Plugin，不配置 Product Skill Path，不运行 Crawler
+Tool Skill，也不直接连接 Observability/Reproduction MCP。
 
 ```text
-CodeBuddyAdapter
-  -> incident_start
-  -> incident_next
-  -> RuntimeTaskSkillRouter
-  -> CodeBuddy/Fake Reasoning Owner
-  -> TaskResult
-  -> incident_submit
-  -> repeat until Runtime terminal state
+CodeBuddy -> Built-in Skills -> Runtime MCP -> Core Runtime
+                                           -> Engine/Adapter
+
+Server Product Repository -> Skill Runtime -> Knowledge Engine
 ```
 
-Adapter 依赖 `RuntimePort`，因此可注入 `RuntimeMcpClient` 或未来 Runtime API Client。MVP 默认使用 Runtime MCP，模块之间没有改为 HTTP 调用。
+## 2. 前置条件
 
-## 2. 实现结构
+- Ops Agent Core `0.1.0`；
+- Docker Engine + Compose，或可直接运行 Python 3.11 应用；
+- CodeBuddy Code CLI/Client 已安装、登录，且版本支持 Plugin 与 HTTP MCP；
+- Server 侧已安装目标 Product/Troubleshooting Plugin；
+- CodeBuddy 主机能够访问 Ops Agent 的 `8000/tcp`；
+- 非本机访问时配置 TLS/网关和 `OPS_AGENT_MCP_ALLOWED_HOSTS`。
 
-- `CodeBuddyAdapter`：执行有界的 start/next/reason/submit 循环。
-- `CodeBuddyAdapterConfig`：选择 `mcp` 或 `api` Runtime transport，并限制最大迭代次数。
-- `RuntimeTaskSkillRouter`：显式映射 RuntimeStage 到 Step 8 Canonical Skill。
-- `ReasoningOwner`：一次只接收 RuntimeTask、只读 IncidentState 快照和对应 Skill，返回 TaskResult。
-- `FakeExternalAgent`：离线测试用 Reasoning Owner；自身没有 RuntimePort、Repository 或 submit 方法。
-- `FakeTaskReasoner`：只调用 Fake Engine Port 完成一项任务，不接收 Runtime。
+本仓库当前环境没有 `codebuddy` 命令，不能把以下官方命令写成已实测结果。
 
-`CodeBuddyRunOutcome` 保存运行期间观察到的 Stage 和已加载 Skill，但权威状态仍是 Runtime 返回的 `final_state`。
+## 3. 启动 Ops Agent Core
 
-## 3. 统一交互协议
-
-1. 用 `incident_start` 提交 `StartIncidentRequest`。
-2. 用 `incident_next` 获取唯一待处理 `RuntimeTask`。
-3. 按任务 Stage 加载 Canonical Skill。
-4. Reasoning Owner 只完成本轮任务，并产生 `TaskResult`。
-5. 用 `incident_submit` 提交结果。
-6. 重复 next/submit。
-7. Runtime 返回 `COMPLETED` 后，从 `IncidentState.rca_report` 获取 RCA。
-
-如果 Runtime 返回 `FAILED` 或 `WAITING_HUMAN`，Adapter 立即退出，不自行重试、批准或跳转。
-
-## 4. Skill 映射
-
-| Runtime Stage | Canonical Skill |
-|---|---|
-| `NORMALIZE` | `incident-analysis` |
-| `KNOWLEDGE_LOOKUP` | `incident-analysis`；产品插件由 Knowledge Engine 解析 |
-| `HYPOTHESIS` | `hypothesis-generation` |
-| `EVIDENCE_PLAN` | `evidence-planning` |
-| `INVESTIGATE` | `incident-analysis` |
-| `ROOT_CAUSE_ASSESSMENT` | `incident-analysis` |
-| `EXPERIMENT_PLAN` | `reproduction-planning` |
-| `REPRODUCE` / `VERIFY` | `incident-analysis` |
-| `REFLECT` | `reflection` |
-| `RCA` | `rca-report` |
-
-映射是方法论选择，不是状态转换表。只有 Runtime 能决定下一个 Stage。
-
-## 5. 配置示例
-
-Adapter 配置见 [adapter.example.toml](../../examples/integrations/codebuddy/adapter.example.toml)：
-
-```toml
-runtime_transport = "mcp"
-skills_target = "codebuddy"
-max_iterations = 50
-```
-
-MCP 配置模板见 [mcp.example.json](../../examples/integrations/codebuddy/mcp.example.json)。其中 `<runtime-mcp-server-command>` 和 `<tool-mcp-server-command>` 是有意保留的占位符：Step 7 尚未实现真实 stdio MCP Server，不应声称存在可启动命令。
-
-## 6. Canonical Skill 安装
-
-不要手工复制或修改六份 Built-in Method Skill。使用 Builder 从 `skills/builtin/` 构建 CodeBuddy target：
-
-```python
-from pathlib import Path
-
-from ops_agent.skills import CanonicalSkillBuilder, SkillCatalog, SkillTarget
-
-catalog = SkillCatalog(Path("skills/builtin"))
-builder = CanonicalSkillBuilder()
-for skill in catalog.load_all():
-    builder.build(skill, target=SkillTarget.CODEBUDDY, destination=Path("build/skills"))
-```
-
-随后将 `build/skills/codebuddy/` 中的构建产物安装到真实 CodeBuddy 客户端所配置的 Skill 目录。该目录位置和发现格式必须以目标客户端版本为准；本步骤没有真实客户端，未假定一个未经验证的固定路径。
-
-## 7. 启动方式
-
-### 离线 Mock
-
-仓库内的集成测试是当前可执行启动方式：
+TestProduct 仅用于隔离验收：
 
 ```bash
-.venv/bin/pytest tests/integration/codebuddy
+OPS_AGENT_PRODUCT_SKILLS_HOST_PATH="$PWD/tests/fixtures/product-skills" \
+docker compose up -d
+docker compose ps
+curl --fail http://127.0.0.1:8000/health
+curl --fail http://127.0.0.1:8000/ready
 ```
 
-它使用 `RuntimeMcpClient -> runtime-mcp -> CoreRuntime` 和 Fake Engine，完整运行订单超时重试案例。
+生产环境把 Host 路径改为外部 Product Skill Repository，不要挂载测试 fixture。
 
-### 真实 CodeBuddy
+## 4. Product Skill 安装
 
-1. 提供实际可运行的 Runtime MCP stdio/HTTP Server binding。
-2. 将 MCP 配置模板中的 command 占位符替换为已验证命令。
-3. 构建并安装 `codebuddy` target Skills。
-4. 在隔离测试环境中使用示例 Prompt 启动会话。
-5. 核对 CodeBuddy 的 Tool Schema、超时、错误和审批交互后，才能标记真实客户端验证完成。
+Product 和 Troubleshooting Skill 只安装到 Server：
 
-当前步骤未实现第 1 项，因此不能声称真实启动已经可用。
+```text
+Host Product Skill Repository
+  -> /opt/ops-agent/plugins/product-skills:ro
+  -> Skill Runtime
+  -> RealKnowledgeEngine
+```
 
-## 8. Example Prompt
+安装和预检查见 [Skill Installation](../deployment/01-skill-installation.md)。真实 V7R2 Skill 不得复制
+到 CodeBuddy Plugin。
 
-完整示例位于 [example-prompt.md](../../examples/integrations/codebuddy/example-prompt.md)。其核心约束是一次只处理一个 RuntimeTask，并明确禁止直接修改 IncidentState、绕过 Validator 写 Evidence 或一次性完成整个诊断。
+## 5. Plugin 目录
 
-## 9. 安全边界
+```text
+integrations/codebuddy/ops-agent-plugin/
+├── .codebuddy-plugin/plugin.json
+├── .mcp.json
+├── README.md
+└── skills/
+    ├── incident-analysis/SKILL.md
+    ├── hypothesis-generation/SKILL.md
+    ├── evidence-planning/SKILL.md
+    ├── reflection/SKILL.md
+    ├── reproduction-planning/SKILL.md
+    └── rca-report/SKILL.md
+```
 
-CodeBuddy Adapter 不允许：
+Plugin Skill 是 `skills/builtin/` 的生成制品，不是第二份手工业务源。生成或校验：
 
-- 持有或写入 StateRepository；
-- 自行构造下一 Stage；
-- 不经 `incident_submit` 修改状态；
-- 绕过 Runtime 接受未校验 Evidence；
-- 因 Skill 声明了 MCP Tool 就绕过 Policy/Human Approval；
-- 在 Runtime 终态后继续提交任务。
+```bash
+.venv/bin/python scripts/build_codebuddy_plugin.py
+.venv/bin/python scripts/build_codebuddy_plugin.py --check
+```
 
-Runtime 会再次校验 task_id、incident_id、request_id、Stage、deadline 和 `TaskOutput`，所以 Agent 输出不是权威状态。
+禁止直接编辑 Plugin 下的 `SKILL.md`。
 
-## 10. 验证状态与限制
+## 6. 本地开发加载
 
-已验证：
+CodeBuddy 官方开发参数是：
 
-- 配置文件可解析并通过 `CodeBuddyAdapterConfig` 校验；
-- MCP JSON 示例合法；
-- Stage 到 Canonical Skill 的映射；
-- FakeExternalAgent 严格执行 next → reason → submit；
-- Runtime MCP E2E 到 `COMPLETED` 并产生 RCA；
-- Fake Reasoning Owner 没有 Runtime start/submit 能力。
+```bash
+codebuddy --plugin-dir ./integrations/codebuddy/ops-agent-plugin
+```
 
-待验证：
+编辑 canonical Skill 并重新构建后，在交互会话执行 `/reload-plugins`。Skill 使用 Plugin namespace，
+例如 `/ops-agent:incident-analysis`；用 `/help` 检查六个 Skill。
 
-- 真实 CodeBuddy Skill 安装目录和发现行为；
-- 真实 CodeBuddy MCP 配置字段兼容性；
-- 真实 stdio/HTTP MCP Server 启动；
-- 在线模型的 TaskResult 结构化输出质量、超时和人工审批体验。
+## 7. 正式安装与卸载
 
-结论：Mock 验证通过，真实客户端待验证。
+正式安装需要先把目录发布到企业 CodeBuddy Marketplace。发布后使用真实 marketplace 名称：
+
+```bash
+codebuddy plugin install ops-agent@<internal-marketplace> --scope user
+codebuddy plugin enable ops-agent@<internal-marketplace> --scope user
+codebuddy plugin uninstall ops-agent@<internal-marketplace> --scope user
+```
+
+当前仓库没有发布 Marketplace，因此 `<internal-marketplace>` 是部署方必须替换的发布标识，不是可执行
+默认值。开发验证优先使用 `--plugin-dir`，不会修改用户全局 Plugin 配置。
+
+## 8. MCP 配置与 Endpoint
+
+实际 transport 是 MCP **Streamable HTTP**：
+
+```text
+http://127.0.0.1:8000/mcp/runtime/
+```
+
+Plugin `.mcp.json` 只定义 `ops-agent-runtime`，URL 来自非敏感 `userConfig.runtime_endpoint`。当前 Core
+没有认证，所以没有 `runtime_token`，不得虚构 Token。远程部署必须在反向代理层增加 TLS、认证和授权。
+
+开发时若要排除用户其他 MCP 干扰，使用显式配置：
+
+```bash
+codebuddy \
+  --plugin-dir ./integrations/codebuddy/ops-agent-plugin \
+  --mcp-config ./integrations/codebuddy/runtime-mcp.example.json \
+  --strict-mcp-config
+```
+
+`--strict-mcp-config` 会忽略 Plugin/user/project MCP，因此上面同时显式传入只含 Runtime MCP 的配置。
+
+非本机 endpoint 还必须在 Server 配置精确 Host：
+
+```dotenv
+OPS_AGENT_MCP_ALLOWED_HOSTS=ops-agent.internal.example:8000
+```
+
+## 9. CodeBuddy Client 使用
+
+在 CodeBuddy Client 的本地 Plugin 开发入口选择
+`integrations/codebuddy/ops-agent-plugin/`，按提示填写 `runtime_endpoint`。确认 Plugin namespace 为
+`ops-agent`，且 MCP 面板只出现 `ops-agent-runtime`。
+
+不同 Client 发行版的 GUI 菜单可能不同，必须以所安装版本界面为准；本仓库没有真实 Client 可验证。
+
+## 10. CodeBuddy CLI 使用
+
+交互模式：
+
+```bash
+codebuddy --plugin-dir ./integrations/codebuddy/ops-agent-plugin --debug
+```
+
+隔离打印模式：
+
+```bash
+codebuddy \
+  --plugin-dir ./integrations/codebuddy/ops-agent-plugin \
+  --mcp-config ./integrations/codebuddy/runtime-mcp.example.json \
+  --strict-mcp-config \
+  -p "$(cat examples/integrations/codebuddy/example-prompt.md)"
+```
+
+不要使用 `--dangerously-skip-permissions` 作为验收前提。
+
+## 11. 确认 Skill 已加载
+
+1. 使用 `--debug` 查找 Plugin load/validation 日志；
+2. 在交互模式运行 `/help`；
+3. 确认 `/ops-agent:incident-analysis`、`hypothesis-generation`、`evidence-planning`、
+   `reflection`、`reproduction-planning`、`rca-report`；
+4. 修改后运行 `/reload-plugins`。
+
+## 12. 确认 Runtime MCP 已连接
+
+用 `--debug` 或 CodeBuddy MCP 状态界面确认 `ops-agent-runtime` 已连接，并且只出现：
+
+- `incident_start`
+- `incident_next`
+- `incident_submit`
+- `incident_get_state`
+- `incident_finish`
+
+服务端可用官方 Python MCP Client 做独立诊断；普通 `curl GET` 不是完整 MCP 握手。
+
+## 13. 第一个 Incident
+
+建议输入：
+
+```text
+使用 /ops-agent:incident-analysis 分析以下问题：
+产品：TestProduct
+版本：1.0
+问题：创建订单时第一次响应超时，客户端重试后产生重复创建。
+
+必须从 incident_start 开始，每次只处理 incident_next 返回的一项 RuntimeTask，
+用结构化 TaskResult 调用 incident_submit；禁止直接修改 IncidentState。
+```
+
+预期顺序是 `incident_start -> incident_next -> incident_get_state -> load stage Skill ->
+incident_submit -> repeat -> incident_finish/RCAReport`。
+
+## 14. 查看完整流程和 RCA
+
+每次提交后调用 `incident_get_state`，记录 Incident ID、`runtime_stage`、revision、pending task 和 audit
+correlation。只有 `runtime_stage=COMPLETED` 才视为完成；最终从 `IncidentState.rca_report` 或
+`incident_finish` 获取 RCAReport。
+
+RCA 必须区分 confirmed facts、inferences、root causes、remediation、unverified items 和 evidence chain。
+
+## 15. 配置清单
+
+| 配置项 | 必需 | 配置位置 | 示例 | 敏感 | 验证 |
+|---|---:|---|---|---:|---|
+| CodeBuddy Plugin Path | 开发态是 | CLI `--plugin-dir` | `./integrations/codebuddy/ops-agent-plugin` | 否 | `/help` |
+| Runtime MCP Endpoint | 是 | Plugin userConfig 或 `--mcp-config` | `http://127.0.0.1:8000/mcp/runtime/` | 否 | 五个 Tool 可见 |
+| MCP Transport | 是 | Plugin `.mcp.json` | `http` | 否 | Debug 显示 connected |
+| Product | 每次 Incident 是 | 用户 ProblemContext | `TestProduct` | 否 | ProductContext 精确匹配 |
+| Version | 每次 Incident 是 | 用户 ProblemContext | `1.0` | 否 | 不回退其他版本 |
+| Runtime Token | 否/不存在 | 无 | 无 | — | 当前 Core 无认证 |
+| Skill enabled | 是 | Plugin enable/当前 session | `ops-agent` | 否 | `/help` |
+| MCP enabled | 是 | Plugin 或显式 MCP config | `ops-agent-runtime` | 否 | MCP 状态/工具列表 |
+| Product Skill Path | CodeBuddy 禁止 | Server `.env`/volume | Server only | 受控资产 | Server preflight |
+| Crawler Tool Skill | 禁止 | 外部知识生产环境 | 不配置 | — | Plugin 中不存在 |
+
+## 16. 错误版本与边界验证
+
+提交不存在版本时，Knowledge Engine 应返回明确的版本未安装错误，不允许选取其他版本。检查 CodeBuddy
+Plugin 目录没有 `skill.toml`、Product payload 或 TestProduct 内容；Product 文件只能出现在 Server
+volume。
+
+## 17. Runtime MCP 不可用和恢复
+
+执行 `docker compose stop ops-agent` 后，CodeBuddy 应明确报告 `ops-agent-runtime` 不可连接，不得输出
+已完成 RCA。执行 `docker compose start ops-agent` 恢复服务。
+
+当前 StateRepository 是内存实现，服务重启后 Incident **不能恢复**。必须重新 `incident_start`；持久化
+恢复是后续能力，不得标记为已验证。
+
+## 18. Debug 与常见问题
+
+| 现象 | 原因 | 处理 |
+|---|---|---|
+| Plugin 不出现 | 目录或 manifest 错误 | `codebuddy --debug --plugin-dir ...`；检查 manifest |
+| Skill 不出现 | 生成制品过期 | 运行 builder 与 `--check`，然后 `/reload-plugins` |
+| MCP 无工具 | endpoint/配置错误 | 检查 `.mcp.json` 和 `/mcp/runtime/` 尾部斜杠 |
+| MCP 返回 421 | Host 不在 allowlist | 更新 `OPS_AGENT_MCP_ALLOWED_HOSTS` 并重启 |
+| Product/version 不存在 | Server 插件未安装 | Server 跑 preflight，不在 CodeBuddy 安装 Product Skill |
+| 服务恢复后 Incident 丢失 | InMemory repository | 重新开始；不能伪造恢复 |
+| 高风险工具不可见 | Plugin 只连接 Runtime MCP | 这是预期安全边界 |
+
+## 19. 升级
+
+1. 更新 canonical `skills/builtin/`；
+2. 增加 Plugin SemVer；
+3. 运行 builder 和 `--check`；
+4. 运行 Plugin/MCP/E2E/静态检查；
+5. 开发态 `/reload-plugins`；正式环境发布新 Marketplace 版本；
+6. 不把 Product Skill 随 Plugin 发布。
+
+## 20. 当前端到端限制
+
+Runtime MCP transport 和五个工具已经可连接，但当前 `CoreRuntime.get_next_task()` 只生成
+`payload={"stage": ...}`，不会在 Server 侧自动调用 Knowledge/Investigation/Reproduction Engine。现有
+Fake E2E 由 Python `FakeTaskReasoner` 持有 Engine Ports 执行任务。
+
+因此，“CodeBuddy 只连接 Runtime MCP，同时 Product Skill 只在 Server，并完整完成 TestProduct RCA”在
+当前公共接口下仍缺少一个 **Server-side Task Execution/Application Service** 边界。不能让 CodeBuddy
+读取 Product 文件，也不能让 MCP transport 偷偷实现 Engine 编排。此项需要单独的 Interface Change
+Proposal 后才能真实闭环，本步骤没有修改 Runtime 状态机或把业务编排塞进 MCP。

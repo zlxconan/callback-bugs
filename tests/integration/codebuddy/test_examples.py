@@ -16,7 +16,12 @@ def test_codebuddy_configuration_examples_parse() -> None:
     assert config.runtime_transport == "mcp"
     assert config.skills_target == "codebuddy"
     assert "ops-agent-runtime" in mcp["mcpServers"]
-    assert mcp["mcpServers"]["ops-agent-runtime"]["command"].startswith("<")
+    assert mcp["mcpServers"]["ops-agent-runtime"] == {
+        "type": "http",
+        "url": "http://127.0.0.1:8000/mcp/runtime/",
+        "description": "Ops Agent Core Runtime MCP",
+    }
+    assert set(mcp["mcpServers"]) == {"ops-agent-runtime"}
 
 
 def test_example_prompt_uses_runtime_protocol() -> None:

@@ -32,7 +32,7 @@ def test_compose_has_one_core_service_and_read_only_product_mount() -> None:
     compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
 
     assert "ops-agent:" in compose
-    assert "8000:8000" in compose
+    assert '"${OPS_AGENT_PORT:-8000}:8000"' in compose
     assert "/opt/ops-agent/plugins/product-skills:ro" in compose
     assert "OPS_AGENT_BUILTIN_SKILLS_PATH: /opt/ops-agent/skills/builtin" in compose
     assert "OPS_AGENT_PRODUCT_SKILLS_PATH: /opt/ops-agent/plugins/product-skills" in compose
