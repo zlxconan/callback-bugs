@@ -13,6 +13,8 @@ from ops_agent.contracts import (
 )
 from ops_agent.reproduction.adapters import FakeReproductionEngine
 
+pytest_plugins = ("tests.reproduction.playwright_lab",)
+
 _INCIDENT = (
     Path(__file__).parents[1] / "examples" / "incidents" / "duplicate-order-timeout-retry.json"
 )

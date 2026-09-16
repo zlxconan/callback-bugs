@@ -40,6 +40,20 @@ def test_knowledge_has_no_playwright_or_crawler_dependency() -> None:
     assert not any("crawler" in imported for imported in imports)
 
 
+def test_reproduction_domain_and_service_have_no_playwright_dependency() -> None:
+    imports = {
+        imported
+        for root in (
+            PACKAGE_ROOT / "reproduction" / "domain",
+            PACKAGE_ROOT / "reproduction" / "service",
+        )
+        for path in root.rglob("*.py")
+        for imported in imported_modules(path)
+    }
+
+    assert not any(imported.startswith("playwright") for imported in imports)
+
+
 def test_contracts_and_core_have_no_langchain_dependency() -> None:
     imports = {
         imported

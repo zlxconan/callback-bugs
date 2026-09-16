@@ -1,6 +1,6 @@
 # Reproduction Engine
 
-> 状态：第一阶段 Real Engine + Fake Tool Adapters complete
+> 状态：第二阶段 Real Engine + Playwright Browser Adapter complete
 > 默认运行方式：模块化单体、进程内 Port 调用
 
 ## 职责
@@ -37,6 +37,8 @@ debug client -> FastAPI Router -> ReproductionService
 ## Adapters、配置与错误
 
 - `adapters/fake.py`：内存模拟首次响应延迟、一次客户端重试和两个订单。
+- `adapters/browser/playwright.py`：`BrowserToolPort` 的最小真实 Playwright 实现，仅封装
+  MVP 需要的页面打开、填写、点击、等待、网络观测、页面状态提取与截图。
 - `service/reproduction_engine.py`：实现既有 `ReproductionPort` 的 RealReproductionEngine。
 - `service/experiment_runner.py`：依次调用 API prepare、Fault、Browser、API evidence Tool Port。
 - `service/verifier.py`：四条确定性规则，不使用 LLM。
@@ -49,8 +51,11 @@ debug client -> FastAPI Router -> ReproductionService
 - `api/errors.py`：HTTP `ErrorResponse` 映射。
 - `api/router.py`：实验生命周期与模块健康调试端点。
 
-第一阶段 Real Engine 只连接 Fake Tool Adapter，不安装或调用 Playwright/Toxiproxy。Shell Port 已注入但固定
-Case 不需要 Shell，因此不会为了展示能力执行无意义命令。
+第二阶段仅将 Browser Tool 替换为真实 Playwright Adapter。FaultInjection、API 与 Shell
+仍使用确定性 Fake Adapter；Toxiproxy、mitmproxy、k6 和 Chaos Mesh 未接入。
+Playwright 依赖只存在于 `reproduction/adapters/browser/`，`domain/` 和 `service/` 不导入它。
+每次执行使用独立 Browser Context，成功或失败都关闭 Context 和 Browser；清理错误会记录，
+不覆盖原始操作异常。
 
 ## 第一阶段固定规则
 
@@ -72,13 +77,25 @@ cleanup，调用方随后显式 cleanup 是安全 no-op。Cleanup 失败保存�
 - `tests/reproduction/test_module.py`：Port、Fake、Service、健康与禁用行为。
 - `tests/reproduction/test_contract.py`：ExperimentResult HTTP 往返、健康与错误 Contract。
 - `tests/reproduction/test_real_engine.py`：Real lifecycle、Verifier、安全、timeout、失败 cleanup 与幂等性。
+- `tests/reproduction/test_playwright_browser_adapter.py`：Adapter Contract 映射，以及真实 Chromium 对本地
+  HTTP 页面的集成、timeout、selector/page 错误、截图证据与清理。
 - `tests/e2e/test_real_reproduction_incident_flow.py`：三个 Fake Engine + RealReproduction 的替换 E2E。
+- `tests/e2e/test_playwright_reproduction_incident_flow.py`：三个 Fake Engine + RealReproduction +
+  Playwright Browser + Fake Fault/API/Shell 的 Runtime E2E。
 - Step 5 E2E 继续覆盖完整实验、H1 验证和执行失败重试超限。
 
 ## MVP
 
-RealReproductionEngine 当前通过确定性 Fake Tool Adapter 运行 timeout/retry/duplicate-create Case，不启动浏览器、
-进程、代理或故障注入平台，不产生真实副作用。真实 Playwright/Toxiproxy 是下一阶段 Adapter 工作。
+RealReproductionEngine 可使用真实 Chromium 运行本地 timeout/retry/duplicate-create Lab，并输出
+请求观测、页面状态和截图引用。测试环境需先安装 Python 依赖和 Chromium：
+
+```bash
+uv sync --extra dev
+.venv/bin/python -m playwright install chromium
+```
+
+当前故障注入仍为 Fake，本地 Lab 用固定服务端延迟产生浏览器超时与重试，不代表
+真实网络代理已集成。
 
 ## Done 标准
 
