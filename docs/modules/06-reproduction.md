@@ -1,6 +1,6 @@
 # Reproduction Engine
 
-> 状态：第二阶段 Real Engine + Playwright Browser Adapter complete
+> 状态：第三阶段 Real Engine + Playwright + Toxiproxy Adapters complete
 > 默认运行方式：模块化单体、进程内 Port 调用
 
 ## 职责
@@ -39,6 +39,8 @@ debug client -> FastAPI Router -> ReproductionService
 - `adapters/fake.py`：内存模拟首次响应延迟、一次客户端重试和两个订单。
 - `adapters/browser/playwright.py`：`BrowserToolPort` 的最小真实 Playwright 实现，仅封装
   MVP 需要的页面打开、填写、点击、等待、网络观测、页面状态提取与截图。
+- `adapters/fault_injection/toxiproxy.py`：`FaultInjectionToolPort` 的 Toxiproxy HTTP API
+  实现，为每个 Experiment Environment 建立独立 Proxy 和 downstream latency Toxic。
 - `service/reproduction_engine.py`：实现既有 `ReproductionPort` 的 RealReproductionEngine。
 - `service/experiment_runner.py`：依次调用 API prepare、Fault、Browser、API evidence Tool Port。
 - `service/verifier.py`：四条确定性规则，不使用 LLM。
@@ -51,9 +53,12 @@ debug client -> FastAPI Router -> ReproductionService
 - `api/errors.py`：HTTP `ErrorResponse` 映射。
 - `api/router.py`：实验生命周期与模块健康调试端点。
 
-第二阶段仅将 Browser Tool 替换为真实 Playwright Adapter。FaultInjection、API 与 Shell
-仍使用确定性 Fake Adapter；Toxiproxy、mitmproxy、k6 和 Chaos Mesh 未接入。
+第三阶段将 FaultInjection Tool 替换为真实 Toxiproxy Adapter。API 与 Shell 仍使用
+确定性 Fake Adapter；mitmproxy、k6 和 Chaos Mesh 未接入。
 Playwright 依赖只存在于 `reproduction/adapters/browser/`，`domain/` 和 `service/` 不导入它。
+Toxiproxy HTTP API 只在 `reproduction/adapters/fault_injection/` 中调用，不进入 domain/service。
+资源名由 Environment Ref 和稳定 hash 构成；cleanup 只移除当前实验的 Toxic/Proxy，
+不调用 Toxiproxy 全局 `/reset`。
 每次执行使用独立 Browser Context，成功或失败都关闭 Context 和 Browser；清理错误会记录，
 不覆盖原始操作异常。
 
@@ -79,6 +84,8 @@ cleanup，调用方随后显式 cleanup 是安全 no-op。Cleanup 失败保存�
 - `tests/reproduction/test_real_engine.py`：Real lifecycle、Verifier、安全、timeout、失败 cleanup 与幂等性。
 - `tests/reproduction/test_playwright_browser_adapter.py`：Adapter Contract 映射，以及真实 Chromium 对本地
   HTTP 页面的集成、timeout、selector/page 错误、截图证据与清理。
+- `tests/reproduction/test_toxiproxy_adapter.py`：Proxy/Toxic 创建与幂等移除、API 不可用、
+  timeout、失败 cleanup、实验隔离，以及真实 Toxiproxy + Chromium Runtime E2E。
 - `tests/e2e/test_real_reproduction_incident_flow.py`：三个 Fake Engine + RealReproduction 的替换 E2E。
 - `tests/e2e/test_playwright_reproduction_incident_flow.py`：三个 Fake Engine + RealReproduction +
   Playwright Browser + Fake Fault/API/Shell 的 Runtime E2E。
@@ -86,16 +93,19 @@ cleanup，调用方随后显式 cleanup 是安全 no-op。Cleanup 失败保存�
 
 ## MVP
 
-RealReproductionEngine 可使用真实 Chromium 运行本地 timeout/retry/duplicate-create Lab，并输出
-请求观测、页面状态和截图引用。测试环境需先安装 Python 依赖和 Chromium：
+RealReproductionEngine 可使用真实 Chromium + Toxiproxy 运行本地
+timeout/retry/duplicate-create Lab，并输出代理、延迟、请求、页面状态和截图证据。
+测试环境需先安装 Python 依赖、Chromium，并可访问 Docker daemon：
 
 ```bash
 uv sync --extra dev
 .venv/bin/python -m playwright install chromium
 ```
 
-当前故障注入仍为 Fake，本地 Lab 用固定服务端延迟产生浏览器超时与重试，不代表
-真实网络代理已集成。
+真实集成测试启动临时 `ghcr.io/shopify/toxiproxy:2.12.0` 容器，让无内置延迟的
+测试后端经过 80ms downstream latency Toxic。客户端 20ms 超时后重试，实验结束
+移除 Toxic 和 Proxy。Docker 不可用时真实容器用例会显式 skip，其余 Contract/错误/
+隔离测试仍执行。
 
 ## Done 标准
 

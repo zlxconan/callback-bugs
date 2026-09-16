@@ -54,6 +54,16 @@ def test_reproduction_domain_and_service_have_no_playwright_dependency() -> None
     assert not any(imported.startswith("playwright") for imported in imports)
 
 
+def test_reproduction_domain_and_service_have_no_toxiproxy_dependency() -> None:
+    for root in (
+        PACKAGE_ROOT / "reproduction" / "domain",
+        PACKAGE_ROOT / "reproduction" / "service",
+    ):
+        for path in root.rglob("*.py"):
+            source = path.read_text(encoding="utf-8").lower()
+            assert "toxiproxy" not in source
+
+
 def test_contracts_and_core_have_no_langchain_dependency() -> None:
     imports = {
         imported

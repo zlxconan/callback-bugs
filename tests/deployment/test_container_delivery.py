@@ -9,13 +9,24 @@ ROOT = Path(__file__).parents[2]
 def test_dockerfile_keeps_runtime_small_and_non_root() -> None:
     dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
 
-    assert dockerfile.count("FROM python:3.11-slim") == 2
-    assert "COPY --from=builder /install /usr/local" in dockerfile
+    assert "ARG OPS_AGENT_BASE_IMAGE=" in dockerfile
+    assert dockerfile.count("FROM ${OPS_AGENT_BASE_IMAGE}") == 2
+    assert "pip install --no-deps" in dockerfile
     assert "COPY --chown=ops-agent:ops-agent skills/builtin" in dockerfile
     assert "USER ops-agent" in dockerfile
     assert "tests/fixtures" not in dockerfile
     assert "HEALTHCHECK" in dockerfile
     assert "ops_agent.api.app:app" in dockerfile
+
+
+def test_offline_base_image_contains_runtime_dependencies_and_chromium() -> None:
+    dockerfile = (ROOT / "Dockerfile.base").read_text(encoding="utf-8")
+
+    assert "FROM python:3.11-slim" in dockerfile
+    assert "PLAYWRIGHT_BROWSERS_PATH=/ms-playwright" in dockerfile
+    assert "playwright install --with-deps chromium" in dockerfile
+    assert "pyproject.toml" in dockerfile
+    assert "src" not in dockerfile
 
 
 def test_dockerignore_excludes_non_runtime_assets_but_keeps_builtin_skills() -> None:
@@ -28,7 +39,7 @@ def test_dockerignore_excludes_non_runtime_assets_but_keeps_builtin_skills() -> 
     assert "skills/builtin" not in dockerignore
 
 
-def test_compose_has_one_core_service_and_read_only_product_mount() -> None:
+def test_compose_has_core_and_toxiproxy_with_read_only_product_mount() -> None:
     compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
 
     assert "ops-agent:" in compose
@@ -38,6 +49,11 @@ def test_compose_has_one_core_service_and_read_only_product_mount() -> None:
     assert "OPS_AGENT_PRODUCT_SKILLS_PATH: /opt/ops-agent/plugins/product-skills" in compose
     assert "test-product" not in compose.lower()
     assert "healthcheck:" in compose
+    assert "toxiproxy:" in compose
+    assert "ghcr.io/shopify/toxiproxy:2.12.0" in compose
+    assert "OPS_AGENT_REPRODUCTION_ADAPTER" in compose
+    assert "OPS_AGENT_TOXIPROXY_API_URL: http://toxiproxy:8474" in compose
+    assert "OPS_AGENT_BROWSER_BASE_URL: http://toxiproxy:8666/" in compose
 
 
 def test_release_packaging_script_has_valid_shell_syntax() -> None:
@@ -59,3 +75,6 @@ def test_release_packaging_script_has_valid_shell_syntax() -> None:
     assert "docker-compose.yml" in content
     assert "01-skill-installation.md" in content
     assert "02-docker-deployment.md" in content
+    assert "Dockerfile.base" in content
+    assert "ops-agent-runtime-base" in content
+    assert "ghcr.io/shopify/toxiproxy:2.12.0" in content

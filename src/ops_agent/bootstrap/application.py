@@ -4,6 +4,10 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from ops_agent.bootstrap.skills import SkillInstallation, build_skill_installation
+from ops_agent.bootstrap.reproduction import (
+    ReproductionInstallationConfig,
+    build_reproduction_service,
+)
 from ops_agent.core.runtime import CoreRuntime
 from ops_agent.core.state import InMemoryStateRepository
 from ops_agent.integrations.mcp import McpToolRegistry
@@ -16,8 +20,6 @@ from ops_agent.knowledge.service import KnowledgeService
 from ops_agent.reasoning.adapters import FakeReasoningEngine
 from ops_agent.reasoning.domain import ReasoningConfig
 from ops_agent.reasoning.service import ReasoningService
-from ops_agent.reproduction.adapters import FakeReproductionEngine
-from ops_agent.reproduction.domain import ReproductionConfig
 from ops_agent.reproduction.service import ReproductionService
 from ops_agent.skill_runtime import SkillInstallationConfig
 
@@ -42,7 +44,11 @@ class ApplicationContainer:
     reproduction: ReproductionService
 
 
-def build_application_container(config: SkillInstallationConfig) -> ApplicationContainer:
+def build_application_container(
+    config: SkillInstallationConfig,
+    *,
+    reproduction_config: ReproductionInstallationConfig | None = None,
+) -> ApplicationContainer:
     """Assemble existing adapters without changing Contracts, Ports, or workflow behavior."""
 
     skills = build_skill_installation(config)
@@ -63,8 +69,7 @@ def build_application_container(config: SkillInstallationConfig) -> ApplicationC
             FakeInvestigationEngine(),
             InvestigationConfig(adapter_name="fake"),
         ),
-        reproduction=ReproductionService(
-            FakeReproductionEngine(),
-            ReproductionConfig(adapter_name="fake"),
+        reproduction=build_reproduction_service(
+            reproduction_config or ReproductionInstallationConfig.from_env()
         ),
     )

@@ -4,6 +4,7 @@ import json
 import threading
 import time
 from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -65,8 +66,8 @@ class LabServer:
     state: LabState
 
 
-@pytest.fixture
-def browser_lab() -> Iterator[LabServer]:
+@contextmanager
+def serve_browser_lab(*, first_response_delay_seconds: float) -> Iterator[LabServer]:
     state = LabState()
 
     class Handler(BaseHTTPRequestHandler):
@@ -98,8 +99,8 @@ def browser_lab() -> Iterator[LabServer]:
                     }
                 )
                 sequence = len(state.requests)
-            if sequence == 1:
-                time.sleep(0.08)
+            if sequence == 1 and first_response_delay_seconds:
+                time.sleep(first_response_delay_seconds)
             try:
                 self._json({"created": True, "sequence": sequence})
             except (BrokenPipeError, ConnectionResetError):
@@ -116,7 +117,7 @@ def browser_lab() -> Iterator[LabServer]:
         def log_message(self, format: str, *args: object) -> None:
             return
 
-    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    server = ThreadingHTTPServer(("0.0.0.0", 0), Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
@@ -125,3 +126,15 @@ def browser_lab() -> Iterator[LabServer]:
         server.shutdown()
         server.server_close()
         thread.join(timeout=2)
+
+
+@pytest.fixture
+def browser_lab() -> Iterator[LabServer]:
+    with serve_browser_lab(first_response_delay_seconds=0.08) as lab:
+        yield lab
+
+
+@pytest.fixture
+def fast_browser_lab() -> Iterator[LabServer]:
+    with serve_browser_lab(first_response_delay_seconds=0) as lab:
+        yield lab

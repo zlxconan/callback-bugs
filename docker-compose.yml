@@ -12,6 +12,15 @@ services:
       OPS_AGENT_PRODUCT_SKILLS_PATH: /opt/ops-agent/plugins/product-skills
       OPS_AGENT_SKILL_CORE_API: ${OPS_AGENT_SKILL_CORE_API:-1.0}
       OPS_AGENT_MCP_ALLOWED_HOSTS: ${OPS_AGENT_MCP_ALLOWED_HOSTS:-127.0.0.1:8000,localhost:8000}
+      OPS_AGENT_REPRODUCTION_ADAPTER: ${OPS_AGENT_REPRODUCTION_ADAPTER:-playwright-toxiproxy}
+      OPS_AGENT_BROWSER_BASE_URL: http://toxiproxy:8666/
+      OPS_AGENT_BROWSER_HEADLESS: ${OPS_AGENT_BROWSER_HEADLESS:-true}
+      OPS_AGENT_REPRODUCTION_SCREENSHOT_DIR: /tmp/ops-agent/screenshots
+      OPS_AGENT_TOXIPROXY_API_URL: http://toxiproxy:8474
+      OPS_AGENT_TOXIPROXY_UPSTREAM: ${OPS_AGENT_TOXIPROXY_UPSTREAM:-host.docker.internal:8080}
+      OPS_AGENT_TOXIPROXY_LISTEN: 0.0.0.0:8666
+      OPS_AGENT_TOXIPROXY_LATENCY_MS: ${OPS_AGENT_TOXIPROXY_LATENCY_MS:-80}
+      OPS_AGENT_REPRODUCTION_TOOL_TIMEOUT_SECONDS: ${OPS_AGENT_REPRODUCTION_TOOL_TIMEOUT_SECONDS:-10}
     ports:
       - "${OPS_AGENT_PORT:-8000}:8000"
     volumes:
@@ -21,6 +30,9 @@ services:
       - /tmp:size=64m,mode=1777
     security_opt:
       - no-new-privileges:true
+    depends_on:
+      toxiproxy:
+        condition: service_healthy
     healthcheck:
       test:
         - CMD
@@ -31,6 +43,26 @@ services:
       timeout: 3s
       start_period: 10s
       retries: 3
+    networks:
+      - ops-agent-network
+
+  toxiproxy:
+    image: ${OPS_AGENT_TOXIPROXY_IMAGE:-ghcr.io/shopify/toxiproxy:2.12.0}
+    restart: unless-stopped
+    expose:
+      - "8474"
+      - "8666"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "/toxiproxy-cli", "--host", "http://127.0.0.1:8474", "list"]
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 5
     networks:
       - ops-agent-network
 
