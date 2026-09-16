@@ -13,3 +13,11 @@ class ReproductionDisabledError(ReproductionError):
 class ReproductionDependencyError(ReproductionError):
     code = "REPRODUCTION_DEPENDENCY_ERROR"
     retryable = True
+
+
+class ReproductionPolicyError(ReproductionError):
+    code = "REPRODUCTION_POLICY_REJECTED"
+
+
+class ReproductionTimeoutError(ReproductionDependencyError):
+    code = "REPRODUCTION_TOOL_TIMEOUT"

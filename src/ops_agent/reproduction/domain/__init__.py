@@ -5,6 +5,8 @@ from ops_agent.reproduction.domain.errors import (
     ReproductionDependencyError,
     ReproductionDisabledError,
     ReproductionError,
+    ReproductionPolicyError,
+    ReproductionTimeoutError,
 )
 
 __all__ = [
@@ -12,4 +14,6 @@ __all__ = [
     "ReproductionDependencyError",
     "ReproductionDisabledError",
     "ReproductionError",
+    "ReproductionPolicyError",
+    "ReproductionTimeoutError",
 ]

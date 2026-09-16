@@ -191,11 +191,14 @@ class FakeTaskReasoner:
                 evidence=state.evidence,
             )
             verification = await self._reproduction.verify(verification_request)
+            environment_ref = result.outputs.get("environment_ref")
+            if not isinstance(environment_ref, str) or not environment_ref:
+                environment_ref = "FAKE-ENV-DUPLICATE-ORDER"
             await self._reproduction.cleanup(
                 EnvironmentCleanupRequest(
                     **self._base(task),
                     experiment_id=plan.experiment_id,
-                    environment_ref="FAKE-ENV-DUPLICATE-ORDER",
+                    environment_ref=environment_ref,
                 )
             )
             return TaskOutput(verification_result=verification)
