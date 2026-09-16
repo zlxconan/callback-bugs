@@ -49,7 +49,7 @@ Adapter 依赖 `RuntimePort`，因此可注入 `RuntimeMcpClient` 或未来 Runt
 | Runtime Stage | Canonical Skill |
 |---|---|
 | `NORMALIZE` | `incident-analysis` |
-| `KNOWLEDGE_LOOKUP` | `product-knowledge`, `troubleshooting` |
+| `KNOWLEDGE_LOOKUP` | `incident-analysis`；产品插件由 Knowledge Engine 解析 |
 | `HYPOTHESIS` | `hypothesis-generation` |
 | `EVIDENCE_PLAN` | `evidence-planning` |
 | `INVESTIGATE` | `incident-analysis` |
@@ -75,14 +75,14 @@ MCP 配置模板见 [mcp.example.json](../../examples/integrations/codebuddy/mcp
 
 ## 6. Canonical Skill 安装
 
-不要手工复制或修改八份业务 Skill。使用 Step 8 Builder 从仓库根目录 `skills/` 构建 CodeBuddy target：
+不要手工复制或修改六份 Built-in Method Skill。使用 Builder 从 `skills/builtin/` 构建 CodeBuddy target：
 
 ```python
 from pathlib import Path
 
 from ops_agent.skills import CanonicalSkillBuilder, SkillCatalog, SkillTarget
 
-catalog = SkillCatalog(Path("skills"))
+catalog = SkillCatalog(Path("skills/builtin"))
 builder = CanonicalSkillBuilder()
 for skill in catalog.load_all():
     builder.build(skill, target=SkillTarget.CODEBUDDY, destination=Path("build/skills"))

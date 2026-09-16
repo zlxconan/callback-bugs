@@ -19,7 +19,7 @@ from ops_agent.reasoning.adapters import FakeReasoningEngine
 from ops_agent.reproduction.adapters import FakeReproductionEngine
 from ops_agent.skills import SkillCatalog
 
-SKILLS_ROOT = Path(__file__).parents[3] / "skills"
+SKILLS_ROOT = Path(__file__).parents[3] / "skills" / "builtin"
 
 
 def command_from(state: IncidentState) -> StartIncidentRequest:
@@ -36,10 +36,7 @@ def command_from(state: IncidentState) -> StartIncidentRequest:
 def test_runtime_task_skill_routing_is_explicit() -> None:
     router = RuntimeTaskSkillRouter(SkillCatalog(SKILLS_ROOT))
 
-    assert router.names_for(RuntimeStage.KNOWLEDGE_LOOKUP) == (
-        "product-knowledge",
-        "troubleshooting",
-    )
+    assert router.names_for(RuntimeStage.KNOWLEDGE_LOOKUP) == ("incident-analysis",)
     assert router.names_for(RuntimeStage.HYPOTHESIS) == ("hypothesis-generation",)
     assert router.names_for(RuntimeStage.EVIDENCE_PLAN) == ("evidence-planning",)
     assert router.names_for(RuntimeStage.REFLECT) == ("reflection",)
@@ -79,7 +76,7 @@ async def test_fake_external_agent_runs_next_reason_submit_e2e(
     assert outcome.final_state.rca_report is not None
     assert reasoning_owner.reason_count == 10
     assert outcome.loaded_skills == reasoning_owner.loaded_skills
-    assert "product-knowledge" in outcome.loaded_skills
+    assert "incident-analysis" in outcome.loaded_skills
     assert "rca-report" in outcome.loaded_skills
     assert runtime.called_tools.count("incident_next") == 11
     assert runtime.called_tools.count("incident_submit") == 10

@@ -117,10 +117,11 @@ Runtime 只 import：
 
 Runtime 不分析日志、不生成 Hypothesis、不调用 LLM、不执行实验或故障注入。Task 的真正执行由外部 Agent 或未来的 Engine/Local Agent Adapter 完成。
 
+Generic Skill Runtime 是相邻的插件基础设施，由组合根/Knowledge Adapter 使用；Core Runtime 不直接加载或解析 Product Plugin，也不因 Plugin 安装状态改变状态机语义。
+
 ## 9. v1 限制
 
 - Repository v1 的 snapshot save 与 audit append 是两个 Port 调用，尚未定义事务性 outbox；生产持久化实现必须处理部分失败。
 - RuntimeTask 使用确定性、可读 ID；分布式多 Runtime 写入时仍需 Repository 的 revision/乐观锁实现。
 - `PERSIST` 当前表示权威状态和 RCA 已保存，尚不包含外部知识库发布。
 - Human approval 尚无身份认证或签名校验；这些属于 API/Policy/Adapter 后续步骤。
-

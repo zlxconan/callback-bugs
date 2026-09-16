@@ -1,0 +1,6 @@
+{
+  "actions_taken": [],
+  "observed_results": [],
+  "known_workarounds": ["Disable automatic retry until idempotency is restored."],
+  "constraints": ["Test fixture only; never query a production system."]
+}

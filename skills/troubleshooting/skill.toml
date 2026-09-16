@@ -1,6 +1,0 @@
-name = "troubleshooting"
-version = "1.0.0"
-description = "Retrieve version-specific troubleshooting operations and verification criteria."
-input_contracts = ["KnowledgeQuery"]
-output_contracts = ["TroubleshootingContext"]
-mcp_tools = ["troubleshooting_query"]

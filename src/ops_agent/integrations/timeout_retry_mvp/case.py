@@ -31,7 +31,7 @@ PROJECT_ROOT = Path(__file__).parents[4]
 KNOWLEDGE_FIXTURE = (
     PROJECT_ROOT / "examples" / "mvp" / "timeout-retry-duplicate-create" / "product-knowledge.json"
 )
-SKILLS_ROOT = PROJECT_ROOT / "skills"
+SKILLS_ROOT = PROJECT_ROOT / "skills" / "builtin"
 
 
 class MvpArtifactPaths(BaseModel):
@@ -76,7 +76,7 @@ class TimeoutRetryMvpCase:
     async def run(self) -> tuple[IncidentState, list[str]]:
         # Capture the reported incident using the same real backend before investigation.
         await self._environment.run_scenario()
-        skill_names = ["product-knowledge", "troubleshooting"]
+        skill_names = ["incident-analysis"]
         catalog = SkillCatalog(SKILLS_ROOT)
         for name in skill_names:
             catalog.get(name)

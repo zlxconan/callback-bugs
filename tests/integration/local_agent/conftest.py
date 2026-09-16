@@ -5,7 +5,7 @@ import pytest
 from ops_agent.contracts import IncidentState, RuntimeStage, RuntimeTask, TaskKind, TaskStatus
 from ops_agent.skills import CanonicalSkill, SkillCatalog
 
-SKILLS_ROOT = Path(__file__).parents[3] / "skills"
+SKILLS_ROOT = Path(__file__).parents[3] / "skills" / "builtin"
 
 
 @pytest.fixture

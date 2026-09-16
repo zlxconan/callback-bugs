@@ -71,7 +71,7 @@ class FixtureKnowledgeEngine:
                 "query": query.query,
                 "facts": self._data["facts"],
                 "references": [self._reference()],
-                "skill_ids": ["product-knowledge"],
+                "skill_ids": ["fixture.order-service.product-knowledge"],
                 "limitations": ["仅适用于 timeout-retry-duplicate-create MVP fixture。"],
             }
         )

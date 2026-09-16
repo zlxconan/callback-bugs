@@ -1,0 +1,20 @@
+{
+  "product_context": {
+    "product_name": "TestProduct",
+    "product_version": "1.0",
+    "component": "create-api",
+    "deployment_environment": "test",
+    "expected_behavior": "Create requests are idempotent for one business key.",
+    "configuration": {
+      "retry_enabled": true,
+      "idempotency_enabled": true
+    }
+  },
+  "knowledge": {
+    "facts": [
+      "TestProduct 1.0 supports one automatic retry.",
+      "The create API requires idempotency for retry safety."
+    ],
+    "limitations": ["Synthetic test-only product knowledge."]
+  }
+}

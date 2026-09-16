@@ -21,10 +21,7 @@ async def test_timeout_retry_duplicate_create_real_mvp(tmp_path: Path) -> None:
     assert outcome.final_state.runtime_stage is RuntimeStage.COMPLETED
     assert outcome.final_state.product is not None
     assert outcome.final_state.product.product_version == "2026.09-retry-enabled"
-    assert outcome.loaded_skill_names == [
-        "product-knowledge",
-        "troubleshooting",
-    ]
+    assert outcome.loaded_skill_names == ["incident-analysis"]
     assert outcome.final_state.hypotheses is not None
     assert outcome.final_state.latest_evidence_plan is not None
     assert len(outcome.final_state.evidence) >= 6

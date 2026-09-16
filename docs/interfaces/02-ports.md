@@ -69,6 +69,8 @@ async def query_troubleshooting(query: KnowledgeQuery) -> TroubleshootingContext
 
 Knowledge 生产 `ProductContext`、`KnowledgeContext`、`TroubleshootingContext`；Runtime 接纳后向 Reasoning 或其他步骤传递所需快照。
 
+Real/Plugin Knowledge 实现可通过 Generic Skill Runtime 解析已安装的 Product/Troubleshooting Plugin，但插件 manifest 和原始文件不得跨越 KnowledgePort。未安装或版本不匹配应返回明确依赖错误，不得静默使用其他版本。
+
 ### 3.2 ReasoningPort
 
 实现者：Reasoning Service。消费者：Runtime。

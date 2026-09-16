@@ -1,0 +1,8 @@
+schema_version = "1.0"
+name = "test-product-product-v2"
+skill_type = "PRODUCT"
+version = "2.0.0"
+product = "TestProduct"
+product_versions = ["2.0"]
+entrypoint = "product.json"
+core_api = "1.0"

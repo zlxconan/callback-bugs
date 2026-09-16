@@ -47,8 +47,12 @@ class CanonicalSkillBuilder:
 
         return "\n".join(
             (
+                f'schema_version = "{skill.schema_version}"',
                 f'name = "{skill.name}"',
+                f'skill_type = "{skill.skill_type.value}"',
                 f'version = "{skill.version}"',
+                f'entrypoint = "{skill.entrypoint}"',
+                f'core_api = "{skill.core_api}"',
                 f'description = "{skill.description}"',
                 f'target = "{target.value}"',
                 f"input_contracts = {array(skill.input_contracts)}",

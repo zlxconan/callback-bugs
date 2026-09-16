@@ -7,6 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from ops_agent.skill_runtime import SkillType
 from ops_agent.skills.models import CanonicalSkill
 
 
@@ -41,6 +42,10 @@ class SkillCatalog:
             names.add(skill.name)
             if skill.source_directory.name != skill.name:
                 raise SkillCatalogError(f"Skill directory/name mismatch: {skill.name}")
+            if skill.skill_type is not SkillType.BUILTIN_METHOD:
+                raise SkillCatalogError(
+                    f"Canonical catalog only accepts BUILTIN_METHOD: {skill.name}"
+                )
             for contract_name in (*skill.input_contracts, *skill.output_contracts):
                 contract = getattr(contracts, contract_name, None)
                 if not isinstance(contract, type) or not issubclass(contract, BaseModel):
@@ -54,7 +59,10 @@ class SkillCatalog:
     @staticmethod
     def _load(manifest_path: Path) -> CanonicalSkill:
         metadata: dict[str, Any] = tomllib.loads(manifest_path.read_text(encoding="utf-8"))
-        instructions_path = manifest_path.with_name("SKILL.md")
+        entrypoint = metadata.get("entrypoint", "SKILL.md")
+        if not isinstance(entrypoint, str):
+            raise SkillCatalogError(f"Invalid entrypoint: {manifest_path}")
+        instructions_path = manifest_path.parent / entrypoint
         if not instructions_path.is_file():
             raise SkillCatalogError(f"Missing instructions: {instructions_path}")
         return CanonicalSkill.model_validate(

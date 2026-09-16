@@ -7,6 +7,8 @@
 
 Investigation Engine 接收单个 EvidenceRequest 或 EvidencePlan，协调未来的 Trace、Log、Metric、K8s、Change、Topology 与 CodeGraph Tool Port，并将采集结果标准化为 Evidence Contract。
 
+Observability MCP 是环境插件化的工具执行能力。Reasoning 只规划 EvidenceRequest；Investigation 才能通过 Tool Port/MCP 采集并完成来源、时间、状态和假设关系标准化。
+
 ## 非职责
 
 本模块不生成假设、不判断最终根因、不执行复现实验、不拥有 Evidence Graph 权威状态，也不直接推进 Runtime Stage。它不得直接调用 Reasoning 或 Reproduction 实现。
@@ -61,4 +63,3 @@ Investigation 变更完成必须满足：采集输入输出 Contract-only；外�
 - MCP/平台/Fake Adapter：`src/ops_agent/investigation/adapters/`
 - HTTP 调试层：`src/ops_agent/investigation/api/`
 - 测试：`tests/investigation/`
-

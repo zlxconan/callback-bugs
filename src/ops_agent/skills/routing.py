@@ -10,7 +10,7 @@ class RuntimeTaskSkillRouter:
 
     _MAPPING: dict[RuntimeStage, tuple[str, ...]] = {
         RuntimeStage.NORMALIZE: ("incident-analysis",),
-        RuntimeStage.KNOWLEDGE_LOOKUP: ("product-knowledge", "troubleshooting"),
+        RuntimeStage.KNOWLEDGE_LOOKUP: ("incident-analysis",),
         RuntimeStage.HYPOTHESIS: ("hypothesis-generation",),
         RuntimeStage.EVIDENCE_PLAN: ("evidence-planning",),
         RuntimeStage.INVESTIGATE: ("incident-analysis",),

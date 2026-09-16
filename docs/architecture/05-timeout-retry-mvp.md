@@ -9,8 +9,9 @@
 验证下面的因果链，而不是建设通用可观测平台或浏览器/代理基础设施：
 
 ```text
-识别 Order Service 2026.09-retry-enabled
-  -> 加载 Product Skill + Troubleshooting Skill
+识别合成测试 Order Service 2026.09-retry-enabled
+  -> 加载 Built-in incident-analysis 方法 Skill
+  -> 由隔离 Knowledge Fixture 输出标准 Context
   -> H-1：首次请求已成功，响应延迟触发重试
   -> 规划 HTTP / Log / Delay / SQLite / Page Evidence
   -> 首次 POST 提交数据库
@@ -28,7 +29,7 @@ Core Runtime、Contract 和 Port 均未为该 Case 创建旁路。状态仍由 R
 | 层 | 本步实现 | 未扩展范围 |
 |---|---|---|
 | Knowledge | 仓库内版本化 JSON Fixture，带 SHA-256 原始引用 | Obsidian Vault、语义检索、远程知识库 |
-| Skill | 从唯一 Canonical Skill Catalog 加载 `product-knowledge`、`troubleshooting` | 平台专属 Skill 分叉 |
+| Skill | 从唯一 Built-in Catalog 加载 `incident-analysis` | 真实 Product Plugin 接入 |
 | Reasoning | 可检查的固定规则；候选 Hypothesis 复用确定性 Reasoning Fake | 在线 LLM、自主开放式规划 |
 | Investigation | 读取真实 HTTP JSONL、应用日志、SQLite 和页面事件 | 生产 Trace/Log/SQL Connector |
 | Reproduction | FastAPI ASGI 后端、httpx 重试客户端、SQLite、提交后响应延迟 | Playwright、mitmproxy、Toxiproxy |
@@ -90,7 +91,7 @@ Evidence Contract 的 `raw_reference.uri` 指向实际 artifact，并保存采�
 ## 6. Done 标准
 
 - 产品版本由 Knowledge Fixture 识别；
-- Product/ Troubleshooting Canonical Skills 均可加载；
+- Built-in `incident-analysis` 可加载；合成 Knowledge Fixture 不冒充真实 Product Plugin；
 - Runtime 依次产生 Hypothesis、EvidencePlan、Evidence、ExperimentPlan、ExperimentResult、VerificationResult、RCAReport；
 - 第一次请求先创建再超时；
 - 客户端自动重试，无人工数据库写入；

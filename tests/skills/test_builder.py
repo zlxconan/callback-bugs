@@ -4,7 +4,7 @@ import pytest
 
 from ops_agent.skills import CanonicalSkillBuilder, SkillCatalog, SkillTarget
 
-SKILLS_ROOT = Path(__file__).parents[2] / "skills"
+SKILLS_ROOT = Path(__file__).parents[2] / "skills" / "builtin"
 
 
 @pytest.mark.parametrize("target", list(SkillTarget))

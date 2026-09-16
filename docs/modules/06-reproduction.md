@@ -7,6 +7,8 @@
 
 Reproduction Engine 管理单次受控实验的环境准备、执行、结果验证和清理。未来通过 Browser、API、Shell 和 FaultInjection Tool Port 执行 Runtime 已批准的 ExperimentPlan。
 
+`reproduction-planning` 是 Core Built-in Method Skill；Playwright、Toxiproxy、mitmproxy、k6、Chaos Mesh 是 Reproduction MCP/Adapter。具体工具步骤不得写死进 Core Runtime。
+
 ## 非职责
 
 本模块不自行选择根因、不规划跨 Engine 工作流、不绕过 Human Approval、不修改 IncidentState，也不决定是否结束 Incident。它不能直接调用 Knowledge、Reasoning 或 Investigation 实现。

@@ -11,6 +11,8 @@ Reasoning Engine 负责生成与排序假设、规划证据、受限反思、根
 
 本模块不采集证据、不执行工具或实验、不直接修改 IncidentState、不决定状态跳转，也不调用其他 Engine 实现。它不能绕过 Runtime 发起 Investigation 或 Reproduction。
 
+Reasoning 只能消费 Knowledge Engine 已标准化的 KnowledgeContext/TroubleshootingContext，不得读取 Product Skill Plugin manifest、入口文件或 Repository。
+
 ## 输入与输出
 
 | 操作 | 输入 | 输出 |
@@ -64,4 +66,3 @@ Reasoning 变更完成必须满足：所有五个 Port 方法保持 async 和 Co
 - LLM/LangChain/Fake Adapter：`src/ops_agent/reasoning/adapters/`
 - HTTP 调试层：`src/ops_agent/reasoning/api/`
 - 测试：`tests/reasoning/`
-

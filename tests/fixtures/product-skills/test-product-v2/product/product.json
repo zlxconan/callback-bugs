@@ -1,0 +1,18 @@
+{
+  "product_context": {
+    "product_name": "TestProduct",
+    "product_version": "2.0",
+    "component": "create-api-v2",
+    "deployment_environment": "test",
+    "expected_behavior": "Create requests use a version-two idempotency ledger.",
+    "configuration": {
+      "retry_enabled": true,
+      "idempotency_enabled": true,
+      "ledger_version": 2
+    }
+  },
+  "knowledge": {
+    "facts": ["TestProduct 2.0 uses the version-two idempotency ledger."],
+    "limitations": ["Synthetic test-only product knowledge."]
+  }
+}

@@ -20,7 +20,9 @@ API / CLI / Agent Host
           |
           +---> InvestigationPort -> Investigation Service -> Observation Tool Ports -> MCP/Adapters
           |
-          +---> ReproductionPort --> Reproduction Service --> Execution Tool Ports ---> MCP/Adapters
+      +---> ReproductionPort --> Reproduction Service --> Execution Tool Ports ---> MCP/Adapters
+
+Knowledge Adapter --> Generic Skill Runtime --> installed Product Plugin
 
 All arrows carry Pydantic Contracts.
 ```
@@ -40,6 +42,7 @@ Runtime 是唯一跨 Engine 编排者。箭头表示编译时依赖抽象或运�
 | Engine `ports` | 顶层 `ports` 的对应 Protocol 重导出 |
 | Engine `adapters` | `contracts`、`ports`、本 Engine API/domain；必要时允许 SDK/LangChain |
 | `integrations` | `contracts`、`ports`、外部 SDK/LangChain/MCP client |
+| `skill_runtime` | Python 标准库、Pydantic；不得依赖 Engine 实现或具体产品内容 |
 | 外部 `api` | FastAPI、`contracts`、`RuntimePort`/application facade |
 | `bootstrap` | 所有需要装配的抽象与具体实现；这是唯一组合根 |
 
@@ -48,8 +51,10 @@ Runtime 是唯一跨 Engine 编排者。箭头表示编译时依赖抽象或运�
 - `contracts` 或 `ports` import FastAPI、LangChain、MCP SDK、ORM 或具体 Adapter。
 - `contracts/core/domain` import LangChain。
 - Core Runtime import 任意 Engine Service/Adapter 实现。
+- Core Runtime import 或读取具体 Product Skill Plugin；插件解析只发生在 Knowledge Adapter 边界。
 - 一个 Engine 的 domain/service/adapter import 另一个 Engine 的实现。
 - Reasoning Service 调用 Investigation 或 Reproduction 实现。
+- Reasoning 读取 Product Skill manifest、入口文件或 Repository。
 - Investigation/Reproduction 直接写 `IncidentState` 或调用 `StateRepositoryPort` 绕过 Runtime。
 - Engine 或 Agent Host 直接推进全局工作流状态。
 - API 将 FastAPI Request/Response 对象传入 Runtime/Engine Port。
@@ -122,4 +127,3 @@ Runtime validates/updates IncidentState
 - 所有方法均为 async，存在返回注解，且签名不直接出现 `Any`、`dict`、FastAPI 或 LangChain。
 - Engine 之间不存在实现 import。
 - Runtime、Reasoning、Knowledge、Investigation、Reproduction、Repository 和全部 Tool Port 都可被确定性 Fake 结构实现。
-

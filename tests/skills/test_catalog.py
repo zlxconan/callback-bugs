@@ -1,13 +1,12 @@
 from pathlib import Path
 
 from ops_agent import contracts
+from ops_agent.skill_runtime import SkillType
 from ops_agent.skills import SkillCatalog
 
-SKILLS_ROOT = Path(__file__).parents[2] / "skills"
+SKILLS_ROOT = Path(__file__).parents[2] / "skills" / "builtin"
 EXPECTED_SKILLS = {
     "incident-analysis",
-    "product-knowledge",
-    "troubleshooting",
     "hypothesis-generation",
     "evidence-planning",
     "reflection",
@@ -24,6 +23,7 @@ def test_canonical_skill_metadata_and_references_are_valid(mcp_tool_names: set[s
 
     assert {skill.name for skill in skills} == EXPECTED_SKILLS
     assert all(skill.version == "1.0.0" for skill in skills)
+    assert all(skill.skill_type is SkillType.BUILTIN_METHOD for skill in skills)
     assert all(skill.input_contracts for skill in skills)
     assert all(skill.output_contracts for skill in skills)
     assert all(skill.instructions_path.name == "SKILL.md" for skill in skills)

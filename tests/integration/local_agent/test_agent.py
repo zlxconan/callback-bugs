@@ -21,7 +21,7 @@ from ops_agent.reasoning.adapters import FakeReasoningEngine
 from ops_agent.reproduction.adapters import FakeReproductionEngine
 from ops_agent.skills import CanonicalSkill, SkillCatalog
 
-SKILLS_ROOT = Path(__file__).parents[3] / "skills"
+SKILLS_ROOT = Path(__file__).parents[3] / "skills" / "builtin"
 
 
 def task_reasoner() -> FakeTaskReasoner:

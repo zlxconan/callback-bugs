@@ -1,0 +1,8 @@
+schema_version = "1.0"
+name = "test-product-troubleshooting-v1"
+skill_type = "TROUBLESHOOTING"
+version = "1.0.0"
+product = "TestProduct"
+product_versions = ["1.0"]
+entrypoint = "troubleshooting.json"
+core_api = "1.0"

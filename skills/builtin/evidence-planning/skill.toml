@@ -1,5 +1,9 @@
+schema_version = "1.0"
 name = "evidence-planning"
+skill_type = "BUILTIN_METHOD"
 version = "1.0.0"
+entrypoint = "SKILL.md"
+core_api = "1.0"
 description = "Convert hypothesis evidence gaps into minimal typed EvidenceRequests."
 input_contracts = ["EvidencePlanningRequest", "Hypothesis"]
 output_contracts = ["EvidencePlan", "EvidenceRequest"]

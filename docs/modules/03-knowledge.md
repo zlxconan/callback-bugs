@@ -1,65 +1,56 @@
-# Knowledge Engine 模块模板
-
-> 状态：Step 6 template complete  
-> 默认运行方式：模块化单体、进程内 Port 调用
+# Knowledge Engine Boundary v0.2
 
 ## 职责
 
-Knowledge Engine 负责解析产品、版本和组件上下文，查询版本适用的产品知识与故障排查知识，并通过结构化 Contract 返回知识来源、事实、限制和 Skill 标识。
+Knowledge Engine 负责：
+
+- Product Skill Plugin / Troubleshooting Skill Plugin 发现接口；
+- 产品与版本精确路由；
+- 插件解析和来源追踪；
+- 版本隔离；
+- 将插件内容标准化为 ProductContext、KnowledgeContext、TroubleshootingContext；
+- 通过 KnowledgePort 向 Runtime 提供结果。
+
+`PluginKnowledgeEngine` 是最小参考 Adapter：它使用 Generic Skill Resolver 加载外部 package，并在 Engine 边界转换为冻结 Contract。
 
 ## 非职责
 
-本模块不编排 Incident，不生成根因假设，不采集现场证据，不执行复现实验，也不保存 Runtime 权威状态。HTTP Router 不是 Runtime 的内部调用链。
+Knowledge Engine 不实现产品官网 crawler、Playwright Crawler Skill、具体 V7R2 Skill，不内置真实产品知识，也不在 Incident Runtime 时实时爬官网。Crawler/Parser/Builder 属于外部知识生产工具链。
 
-## 输入与输出
+## 输入输出
 
 | 操作 | 输入 | 输出 |
 |---|---|---|
-| `resolve_product` | `ProblemContext` | `ProductContext` |
-| `query_product_knowledge` | `KnowledgeQuery` | `KnowledgeContext` |
-| `query_troubleshooting` | `KnowledgeQuery` | `TroubleshootingContext` |
-| `health` | 无 | `ModuleHealth` |
+| resolve_product | ProblemContext | ProductContext |
+| query_product_knowledge | KnowledgeQuery | KnowledgeContext |
+| query_troubleshooting | KnowledgeQuery | TroubleshootingContext |
 
-## Ports 与调用方式
+Product Plugin 原始文件不得跨出 Knowledge Adapter。Reasoning 只能消费上述标准 Contract。
 
-公共边界是 `KnowledgePort`。`KnowledgeService` 结构化实现该 Protocol，Core Runtime 或组合根应向其注入一个 `KnowledgePort` Adapter，并直接进行 async Python 调用：
+## 依赖关系
 
 ```text
-Core Runtime -> KnowledgeService -> KnowledgePort adapter
-debug client -> FastAPI Router -> KnowledgeService
+Runtime -> KnowledgePort -> Knowledge Service/Adapter
+                           -> SkillResolver
+                           -> SkillRegistry/Loader/Validator
+                           -> installed Product Plugin
+                           -> KnowledgeContext
 ```
 
-未来拆服务时仅替换入站装配与 Adapter；Service、Domain 及公共 Contract 不因 HTTP 传输而改变。
+模块化单体默认进程内调用。`knowledge-mcp` 只在远程部署时作为 KnowledgePort Adapter，不是产品知识载体。
 
-## Adapters、配置与错误
+## Plugin Spec
 
-- `adapters/fake.py`：当前确定性 Fake。
-- `adapters/`：未来 Obsidian、Git 知识源或 LangChain 边界；LangChain 类型必须在 Adapter 内终止。
-- `domain/config.py`：冻结的 `KnowledgeConfig`，当前包含启用开关与 adapter 名称。
-- `domain/errors.py`：模块错误、禁用错误和可重试依赖错误。
-- `api/errors.py`：只在 HTTP 边界将模块错误映射为 `ErrorResponse`。
-- `api/router.py`：`/knowledge/*` 调试端点与 `/knowledge/health`。
+Product/Troubleshooting manifest 必须声明类型、产品、适用版本、插件版本、Core API 和安全相对入口。真实插件位于外部 Product Skill Repository；本仓库仅保留 `tests/fixtures/product-skills/` 合成数据。
 
-## 测试
+## 测试与 Done
 
-- `tests/knowledge/test_module.py`：Service/Port/Fake/禁用配置单元测试。
-- `tests/knowledge/test_contract.py`：FastAPI 请求响应、ModuleHealth 与 ErrorResponse Contract 测试。
-- 全局架构测试继续禁止 domain、contracts、ports、core 引入 LangChain/FastAPI。
+- 未安装产品/版本返回明确错误；
+- 同一产品不同版本严格隔离；
+- PRODUCT 与 TROUBLESHOOTING 类型不混用；
+- RawReference 包含入口 URI 与 digest；
+- PluginKnowledgeEngine 结构化满足 KnowledgePort；
+- Knowledge 不 import Playwright/crawler；
+- FakeKnowledgeEngine 和既有 Fake E2E 保持稳定。
 
-## MVP
-
-MVP 仅使用 `FakeKnowledgeEngine` 返回 Step 5 的订单重试和非幂等知识，不连接真实知识库或 LLM。
-
-## Done 标准
-
-Knowledge 变更完成必须满足：所有 Port 方法使用公共 Contract；Service 可通过 Fake 独立运行；Router 可单独挂载调试；错误可映射；模块健康可查询；模块测试、Contract 测试、ruff、mypy 与全量 pytest 全部通过。
-
-## 后续负责人开发目录
-
-- 领域配置与错误：`src/ops_agent/knowledge/domain/`
-- 用例入口：`src/ops_agent/knowledge/service/`
-- 公共入口重导出：`src/ops_agent/knowledge/ports/`
-- 外部知识与 LangChain 边界：`src/ops_agent/knowledge/adapters/`
-- HTTP 调试层：`src/ops_agent/knowledge/api/`
-- 测试：`tests/knowledge/`
-
+负责人目录：`src/ops_agent/knowledge/`、`src/ops_agent/skill_runtime/` 的接口协作、`tests/knowledge/` 与测试插件 Fixture。不得提交真实产品 Skill 内容。
