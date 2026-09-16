@@ -1,20 +1,35 @@
 {
+  "schema_version": "1.0",
   "product_context": {
     "product_name": "TestProduct",
     "product_version": "1.0",
     "component": "create-api",
     "deployment_environment": "test",
-    "expected_behavior": "Create requests are idempotent for one business key.",
+    "expected_behavior": "Create requests retry safely only when the service enforces idempotency for one business key.",
     "configuration": {
       "retry_enabled": true,
-      "idempotency_enabled": true
+      "max_retries": 1,
+      "idempotency_required": true
     }
   },
-  "knowledge": {
-    "facts": [
-      "TestProduct 1.0 supports one automatic retry.",
-      "The create API requires idempotency for retry safety."
-    ],
-    "limitations": ["Synthetic test-only product knowledge."]
-  }
+  "features": [
+    {
+      "id": "create-order",
+      "description": "TestProduct 1.0 provides the create-order operation for one business key."
+    }
+  ],
+  "retry_behavior": {
+    "enabled": true,
+    "max_retries": 1,
+    "description": "TestProduct 1.0 supports one automatic retry after a client timeout."
+  },
+  "known_issues": [
+    {
+      "id": "timeout-retry-duplicate-create",
+      "description": "A successful first request with a delayed response can trigger a retry and duplicate create risk when idempotency is not enforced."
+    }
+  ],
+  "limitations": [
+    "Synthetic test-only product knowledge; it does not describe a real product."
+  ]
 }

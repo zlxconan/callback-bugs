@@ -1,121 +1,145 @@
-"""KnowledgePort adapter backed by installable Product Plugin Skills."""
+"""KnowledgePort implementation backed by installable Product Plugin Skills."""
 
-from pydantic import JsonValue
+from pydantic import ValidationError
 
 from ops_agent.contracts import (
     KnowledgeContext,
     KnowledgeQuery,
     ProblemContext,
     ProductContext,
-    RawReference,
     TroubleshootingContext,
 )
-from ops_agent.skill_runtime import LoadedSkill, SkillResolver, SkillType
+from ops_agent.knowledge.domain import (
+    InvalidProductSkillError,
+    ProductSkillSpec,
+    TroubleshootingSkillSpec,
+    UnknownProductError,
+    UnknownProductVersionError,
+)
+from ops_agent.knowledge.service.normalizer import KnowledgeNormalizer
+from ops_agent.skill_runtime import (
+    LoadedSkill,
+    SkillProductNotInstalledError,
+    SkillResolver,
+    SkillType,
+    SkillVersionNotInstalledError,
+)
 
 
-class PluginKnowledgeEngine:
-    """Normalize external Product Plugin data into stable Knowledge Contracts."""
+class RealKnowledgeEngine:
+    """Resolve, validate, and normalize installed product knowledge plugins."""
 
-    def __init__(self, resolver: SkillResolver) -> None:
+    def __init__(
+        self,
+        resolver: SkillResolver,
+        normalizer: KnowledgeNormalizer | None = None,
+    ) -> None:
         self._resolver = resolver
+        self._normalizer = normalizer or KnowledgeNormalizer()
 
     async def resolve_product(self, problem: ProblemContext) -> ProductContext:
         product, version = self._problem_scope(problem)
-        skill = self._resolver.resolve(
-            product=product,
-            product_version=version,
-            skill_type=SkillType.PRODUCT,
-        )
-        content = self._object_content(skill)
-        context = self._object_value(content, "product_context")
-        return ProductContext.model_validate(
-            {
-                **self._base(problem, skill),
-                **context,
-            }
-        )
+        skill = self._resolve(product, version, SkillType.PRODUCT)
+        spec = self._product_spec(skill, product, version)
+        return self._normalizer.product_context(problem, skill, spec)
 
     async def query_product_knowledge(self, query: KnowledgeQuery) -> KnowledgeContext:
-        if query.product is None:
-            raise ValueError("KnowledgeQuery requires resolved ProductContext")
-        skill = self._resolver.resolve(
-            product=query.product.product_name,
-            product_version=query.product.product_version,
-            skill_type=SkillType.PRODUCT,
-        )
-        content = self._object_content(skill)
-        knowledge = self._object_value(content, "knowledge")
-        return KnowledgeContext.model_validate(
-            {
-                **self._base(query, skill),
-                "query": query.query,
-                "facts": knowledge.get("facts", []),
-                "references": [
-                    RawReference(
-                        uri=skill.entrypoint.as_uri(),
-                        digest=skill.digest,
-                        media_type="application/json",
-                    )
-                ],
-                "skill_ids": [skill.manifest.name],
-                "limitations": knowledge.get("limitations", []),
-            }
-        )
+        product, version = self._query_scope(query)
+        skill = self._resolve(product, version, SkillType.PRODUCT)
+        spec = self._product_spec(skill, product, version)
+        return self._normalizer.knowledge_context(query, skill, spec)
 
     async def query_troubleshooting(self, query: KnowledgeQuery) -> TroubleshootingContext:
-        if query.product is None:
-            raise ValueError("KnowledgeQuery requires resolved ProductContext")
-        skill = self._resolver.resolve(
-            product=query.product.product_name,
-            product_version=query.product.product_version,
-            skill_type=SkillType.TROUBLESHOOTING,
-        )
-        content = self._object_content(skill)
-        return TroubleshootingContext.model_validate(
-            {
-                **self._base(query, skill),
-                **content,
-            }
-        )
+        product, version = self._query_scope(query)
+        skill = self._resolve(product, version, SkillType.TROUBLESHOOTING)
+        spec = self._troubleshooting_spec(skill, product, version)
+        return self._normalizer.troubleshooting_context(query, skill, spec)
+
+    def _resolve(self, product: str, version: str, skill_type: SkillType) -> LoadedSkill:
+        try:
+            return self._resolver.resolve(
+                product=product,
+                product_version=version,
+                skill_type=skill_type,
+            )
+        except SkillProductNotInstalledError as error:
+            raise UnknownProductError(str(error)) from error
+        except SkillVersionNotInstalledError as error:
+            raise UnknownProductVersionError(str(error)) from error
 
     @staticmethod
     def _problem_scope(problem: ProblemContext) -> tuple[str, str]:
         product = problem.environment.get("product")
         version = problem.environment.get("version")
-        if not isinstance(product, str) or not isinstance(version, str):
-            raise ValueError("ProblemContext.environment requires string product and version")
+        if not isinstance(product, str) or not product.strip():
+            raise UnknownProductError(
+                "ProblemContext.environment requires a non-empty string product"
+            )
+        if not isinstance(version, str) or not version.strip():
+            raise UnknownProductVersionError(
+                f"ProblemContext.environment requires a version for {product}"
+            )
         return product, version
 
     @staticmethod
-    def _object_content(skill: LoadedSkill) -> dict[str, JsonValue]:
-        if not isinstance(skill.content, dict):
-            raise ValueError(f"Plugin content must be a JSON object: {skill.manifest.name}")
-        return skill.content
+    def _query_scope(query: KnowledgeQuery) -> tuple[str, str]:
+        if query.product is None:
+            raise UnknownProductError("KnowledgeQuery requires resolved ProductContext")
+        return query.product.product_name, query.product.product_version
 
     @staticmethod
-    def _object_value(
-        content: dict[str, JsonValue],
-        field: str,
-    ) -> dict[str, JsonValue]:
-        value = content.get(field)
-        if not isinstance(value, dict):
-            raise ValueError(f"Plugin field must be an object: {field}")
-        return value
-
-    @staticmethod
-    def _base(
-        contract: ProblemContext | KnowledgeQuery,
+    def _product_spec(
         skill: LoadedSkill,
-    ) -> dict[str, JsonValue]:
-        return {
-            "schema_version": contract.schema_version,
-            "incident_id": contract.incident_id,
-            "request_id": contract.request_id,
-            "timestamp": contract.timestamp.isoformat(),
-            "source": "product-skill-plugin",
-            "metadata": {
-                "skill_name": skill.manifest.name,
-                "skill_version": skill.manifest.version,
-                "skill_digest": skill.digest,
-            },
-        }
+        product: str,
+        version: str,
+    ) -> ProductSkillSpec:
+        try:
+            spec = ProductSkillSpec.model_validate(skill.content)
+        except ValidationError as error:
+            raise InvalidProductSkillError(
+                f"Invalid PRODUCT payload for {skill.manifest.name}: {error}"
+            ) from error
+        context = spec.product_context
+        if context.product_name != product or skill.manifest.product != product:
+            raise InvalidProductSkillError(
+                f"PRODUCT payload product_name {context.product_name!r} does not match "
+                f"manifest product {product!r}"
+            )
+        if context.product_version != version or skill.manifest.product_versions != (
+            context.product_version,
+        ):
+            raise InvalidProductSkillError(
+                f"PRODUCT payload product_version {context.product_version!r} does not match "
+                f"manifest/resolved versions {skill.manifest.product_versions!r}/{version!r}"
+            )
+        return spec
+
+    @staticmethod
+    def _troubleshooting_spec(
+        skill: LoadedSkill,
+        product: str,
+        version: str,
+    ) -> TroubleshootingSkillSpec:
+        try:
+            spec = TroubleshootingSkillSpec.model_validate(skill.content)
+        except ValidationError as error:
+            raise InvalidProductSkillError(
+                f"Invalid TROUBLESHOOTING payload for {skill.manifest.name}: {error}"
+            ) from error
+        if spec.product != product or skill.manifest.product != product:
+            raise InvalidProductSkillError(
+                f"TROUBLESHOOTING payload product {spec.product!r} does not match "
+                f"manifest product {product!r}"
+            )
+        if version not in spec.product_versions or set(spec.product_versions) != set(
+            skill.manifest.product_versions
+        ):
+            raise InvalidProductSkillError(
+                f"TROUBLESHOOTING payload product_versions {spec.product_versions!r} "
+                f"do not include resolved version {version!r}"
+            )
+        return spec
+
+
+# Compatibility name retained for callers introduced by Architecture Baseline v0.2.
+PluginKnowledgeEngine = RealKnowledgeEngine

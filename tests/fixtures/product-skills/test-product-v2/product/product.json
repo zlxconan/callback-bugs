@@ -1,4 +1,5 @@
 {
+  "schema_version": "1.0",
   "product_context": {
     "product_name": "TestProduct",
     "product_version": "2.0",
@@ -7,12 +8,24 @@
     "expected_behavior": "Create requests use a version-two idempotency ledger.",
     "configuration": {
       "retry_enabled": true,
+      "max_retries": 1,
       "idempotency_enabled": true,
       "ledger_version": 2
     }
   },
-  "knowledge": {
-    "facts": ["TestProduct 2.0 uses the version-two idempotency ledger."],
-    "limitations": ["Synthetic test-only product knowledge."]
-  }
+  "features": [
+    {
+      "id": "create-order",
+      "description": "TestProduct 2.0 records create-order requests in the version-two idempotency ledger."
+    }
+  ],
+  "retry_behavior": {
+    "enabled": true,
+    "max_retries": 1,
+    "description": "TestProduct 2.0 returns the ledger result when a create request is retried."
+  },
+  "known_issues": [],
+  "limitations": [
+    "Synthetic test-only product knowledge; it does not describe a real product."
+  ]
 }

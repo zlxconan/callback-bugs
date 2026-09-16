@@ -38,9 +38,40 @@ product-skill-package/
 
 Package 可来自外部 repository 或安装目录。Core 仓库只在 `tests/fixtures/product-skills/` 保存合成测试 Package。
 
+## Entrypoint Payload
+
+Manifest 是 Generic Skill Runtime 的通用元数据；入口内容由 Knowledge Engine 的内部 Pydantic Schema 校验，两者不能互相替代。
+
+PRODUCT JSON v1：
+
+```text
+schema_version: "1.0"
+product_context:
+  product_name / product_version / component
+  deployment_environment / expected_behavior / configuration
+features[]: id / description
+retry_behavior: enabled / max_retries / description
+known_issues[]: id / description
+limitations[]
+```
+
+TROUBLESHOOTING JSON v1：
+
+```text
+schema_version: "1.0"
+product
+product_versions[]
+faults[]:
+  id / symptoms[] / possible_causes[]
+  recommended_actions[] / validation_steps[]
+  known_workarounds[] / constraints[]
+```
+
+Payload 禁止未知字段。Manifest 的产品和适用版本必须与 payload 一致；不一致时 Knowledge Engine 返回 `KNOWLEDGE_PLUGIN_INVALID`。Troubleshooting 的建议操作和验证步骤不会被错误映射成公共 Contract 中表示历史事实的 `actions_taken` 或 `observed_results`。
+
 ## 生命周期和错误
 
-Loader 发现、Validator 校验、Registry 建立内存索引、Resolver 按 product/version/type 解析。重复范围、不安全入口、缺失入口或 Core API 不兼容均拒绝加载；未安装匹配 Package 抛出 `SkillNotInstalledError`。
+Loader 发现、Validator 校验、Registry 建立内存索引、Resolver 按 product/version/type 解析。重复 manifest name、重叠产品版本范围、不安全入口、缺失入口或 Core API 不兼容均拒绝加载；未安装匹配 Package 抛出 `SkillNotInstalledError` 的明确产品或版本子类。
 
 Registry 的 install/uninstall 只改变进程内索引，不删除外部 Repository 文件。远程下载、签名、信任链和持久化安装器不在 v0.2 范围。
 

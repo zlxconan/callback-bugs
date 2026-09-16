@@ -1,6 +1,33 @@
 {
-  "actions_taken": [],
-  "observed_results": [],
-  "known_workarounds": ["Disable automatic retry until idempotency is restored."],
-  "constraints": ["Test fixture only; never query a production system."]
+  "schema_version": "1.0",
+  "product": "TestProduct",
+  "product_versions": ["1.0"],
+  "faults": [
+    {
+      "id": "timeout-retry-duplicate-create",
+      "symptoms": [
+        "The first create response times out.",
+        "The client retries with the same business key.",
+        "Two orders are created."
+      ],
+      "possible_causes": [
+        "The first request committed before its delayed response.",
+        "The create operation did not enforce idempotency."
+      ],
+      "recommended_actions": [
+        "Correlate both requests by business key and request identifier.",
+        "Verify the first commit occurred before the client timeout."
+      ],
+      "validation_steps": [
+        "Confirm that idempotent retry returns the original order instead of creating another."
+      ],
+      "known_workarounds": [
+        "Disable automatic retry until idempotency is restored.",
+        "Enable idempotency enforcement for the create-order operation."
+      ],
+      "constraints": [
+        "Synthetic test fixture only; never query a production system."
+      ]
+    }
+  ]
 }

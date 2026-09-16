@@ -16,6 +16,7 @@ from ops_agent.skill_runtime import (
     SkillRegistry,
     SkillResolver,
     SkillType,
+    SkillValidationError,
 )
 
 FIXTURE_ROOT = Path(__file__).parents[1] / "fixtures" / "product-skills"
@@ -104,6 +105,27 @@ def test_registry_install_and_uninstall_are_in_memory_and_reversible() -> None:
         skill_type=SkillType.PRODUCT,
     )
     assert restored.manifest.name == installed.manifest.name
+
+
+def test_registry_rejects_duplicate_manifest_names(tmp_path: Path) -> None:
+    first = FIXTURE_ROOT / "test-product-v1" / "product"
+    second = FIXTURE_ROOT / "test-product-v2" / "product"
+    for index, source in enumerate((first, second), start=1):
+        destination = tmp_path / str(index)
+        destination.mkdir()
+        manifest = (source / "skill.toml").read_text(encoding="utf-8")
+        manifest = manifest.replace(
+            f'name = "test-product-product-v{index}"',
+            'name = "duplicate-product-name"',
+        )
+        (destination / "skill.toml").write_text(manifest, encoding="utf-8")
+        (destination / "product.json").write_text(
+            (source / "product.json").read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+
+    with pytest.raises(SkillValidationError, match="name"):
+        SkillRegistry(SkillLoader(tmp_path)).refresh()
 
 
 @pytest.mark.asyncio
