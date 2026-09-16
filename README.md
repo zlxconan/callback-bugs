@@ -58,6 +58,24 @@ pytest
 
 健康端点：`GET /health`、`GET /ready`。
 
+## Docker 启动
+
+Core 以单个模块化单体服务运行，监听 `8000`。首次启动前准备外部 Product
+Skill 根目录；仓库提供的 `runtime-data/product-skills/` 默认是空挂载点，不包含真实知识：
+
+```bash
+cp .env.example .env
+docker compose config
+docker compose up -d
+curl --fail http://127.0.0.1:8000/health
+curl --fail http://127.0.0.1:8000/ready
+```
+
+完整构建、只读插件挂载、验证和离线交付流程见
+[Docker Deployment](docs/deployment/02-docker-deployment.md)。Runtime MCP 当前是同一 Python
+应用中的进程内、传输无关 Registry；本版本没有声明额外的 HTTP/SSE MCP 端口。部署组合使用
+RealKnowledgeEngine；Reasoning、Investigation、Reproduction 仍使用项目当前已有的 Fake Adapter。
+
 ## Skill 部署前配置
 
 开发环境可复制 `.env.example`。Real Knowledge 装配要求设置

@@ -1,6 +1,7 @@
 """Generic Skill discovery, validation, lifecycle, and resolution."""
 
 from ops_agent.skill_runtime.config import (
+    PRODUCT_SKILLS_PATH_ENV,
     SkillConfigurationError,
     SkillInstallationConfig,
 )
@@ -21,6 +22,7 @@ from ops_agent.skill_runtime.validator import SkillValidationError, SkillValidat
 
 __all__ = [
     "LoadedSkill",
+    "PRODUCT_SKILLS_PATH_ENV",
     "SkillConfigurationError",
     "SkillInstallationConfig",
     "SkillInstallationVerification",

@@ -1,0 +1,38 @@
+services:
+  ops-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${OPS_AGENT_IMAGE:-ops-agent-core:0.1.0}
+    restart: unless-stopped
+    environment:
+      OPS_AGENT_ENV: production
+      OPS_AGENT_LOG_LEVEL: ${OPS_AGENT_LOG_LEVEL:-INFO}
+      OPS_AGENT_BUILTIN_SKILLS_PATH: /opt/ops-agent/skills/builtin
+      OPS_AGENT_PRODUCT_SKILLS_PATH: /opt/ops-agent/plugins/product-skills
+      OPS_AGENT_SKILL_CORE_API: ${OPS_AGENT_SKILL_CORE_API:-1.0}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ${OPS_AGENT_PRODUCT_SKILLS_HOST_PATH:-./runtime-data/product-skills}:/opt/ops-agent/plugins/product-skills:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=2).read()"
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+    networks:
+      - ops-agent-network
+
+networks:
+  ops-agent-network:
+    name: ops-agent-network
